@@ -2,11 +2,15 @@
 #include <vector>
 #include <string>
 #include "MenuOption.h"
+#include "MenuOptionSubmenu.h"
+#include "MenuOptionToggle.h"
+
+class Client;
 
 class Menu
 {
 public:
-	Menu();
+	Menu(std::string title, Client* owner);
 	void Render();
 	void ToggleMenu();
 	void AddOption(MenuOption* option);
@@ -14,6 +18,8 @@ public:
 
 	std::vector<MenuOption*> Options;
 	std::string Title;
+	
+	Client* Owner;
 
 	HudText* TitleElem;
 	HudMaterial* BackgroundElem;

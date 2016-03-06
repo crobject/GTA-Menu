@@ -40,4 +40,7 @@ void HudMaterial::SetMaterial(float x, float y, float width, float height, hudel
 	m_x = x;
 	m_y = y;
 	m_color = color;
+
+	m_moveEndTime = 0;
+	m_moveStartTime = 0;
 }

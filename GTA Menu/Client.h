@@ -12,7 +12,12 @@ public:
 
 	void ScrollDown();
 	void ScrollUp();
+	uint32_t GetCurrentItemIndex();
 	~Client();
+
 	Menu* CurrentMenu;
+	Menu* PreviousMenu;
+	Menu* BaseMenu;
 	std::vector<MenuOption*>::iterator CurrentItem;
+	bool GodMode;
 };

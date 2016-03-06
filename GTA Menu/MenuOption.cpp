@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "MenuOption.h"
-#include "Config.h"
 
 MenuOption::MenuOption(std::string title, std::string description, OptionCallback cb)
 {
@@ -19,7 +18,7 @@ void MenuOption::Call()
 
 void MenuOption::Render()
 {
-	Elem.SetText(Text, 0xFFFFFFFF, MENU_X_POSITION, MENU_Y_POSITION + ((float)Position * MENU_ITEM_DIFFERENCE), DEFAULT_OPTION_SCALE, 4);
+	Elem.SetText(Text, hudelem_color_t(0xFFFFFFFF), MENU_X_POSITION, MENU_Y_POSITION + ((float)Position * MENU_ITEM_DIFFERENCE), DEFAULT_OPTION_SCALE, 4);
 	Elem.Render();
 }
 

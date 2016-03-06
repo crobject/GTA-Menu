@@ -2,11 +2,14 @@
 #include <functional>
 #include <string>
 #include "HudElem.h"
+#include "Config.h"
 
+class Menu;
 typedef std::function<void(void* param)> OptionCallback;
 class MenuOption
 {
 public:
+	MenuOption() {}
 	MenuOption(std::string title, std::string description, OptionCallback cb);
 	virtual void OnHover() {}
 	virtual void OnLeave() {}
@@ -18,4 +21,5 @@ public:
 	std::string Description;
 	HudText Elem;
 	uint32_t Position;
+	Menu* Parent;
 };
