@@ -11,4 +11,3 @@ public:
 private:
 	bool* m_toggle;
 };
-

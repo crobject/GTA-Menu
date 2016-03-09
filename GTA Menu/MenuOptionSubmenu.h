@@ -9,4 +9,3 @@ public:
 	void Call();
 	~MenuOptionSubmenu();
 };
-

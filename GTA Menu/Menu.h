@@ -18,7 +18,7 @@ public:
 
 	std::vector<MenuOption*> Options;
 	std::string Title;
-	
+
 	Client* Owner;
 
 	HudText* TitleElem;

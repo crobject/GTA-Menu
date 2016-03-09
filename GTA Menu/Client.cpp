@@ -57,11 +57,8 @@ void Client::InitializeMenu()
 			{
 				uint32_t VehicleHandle = VEHICLE::CREATE_VEHICLE(hash, pos.x, pos.y, pos.z, 0, FALSE, FALSE);
 				STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(hash);
-			}			
-			
+			}
 		}));
-
-
 	}));
 
 	CurrentMenu->AddOption(new MenuOption("Self Menu", "Actions that effect the player using the menu", [&](void* param)->void
