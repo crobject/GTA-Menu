@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include "inc\types.h"
 #include <vector>
@@ -176,9 +177,6 @@ public:
 	UIText(std::string caption, Point position, float scale, Color_t color, Font_t font, bool centered);
 	UIText(std::string caption, Point position, float scale, Color_t color, Font_t font, bool centered, bool shadow, bool outline);
 
-	bool Enabled;
-	Point Position;
-	Color_t Color;
 	std::string Caption;
 	Font_t Font;
 	float Scale;
@@ -197,11 +195,7 @@ public:
 	UIRectangle(Point position, Size_t size);
 	UIRectangle(Point position, Size_t size, Color_t color);
 
-	bool Enabled;
-	Point Position;
 	Size_t Size;
-	Color_t Color;
-
 	void Draw();
 	void Draw(Size_t offset);
 };

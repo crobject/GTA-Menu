@@ -18,8 +18,7 @@ void MenuOption::Call()
 
 void MenuOption::Render()
 {
-	Elem.SetText(Text, hudelem_color_t(0xFFFFFFFF), MENU_X_POSITION, MENU_Y_POSITION + ((float)Position * MENU_ITEM_DIFFERENCE), DEFAULT_OPTION_SCALE, 4);
-	Elem.Render();
+	Elem.Caption = Text;// , hudelem_color_t(0xFFFFFFFF), MENU_X_POSITION, MENU_Y_POSITION + ((float)Position * MENU_ITEM_DIFFERENCE), DEFAULT_OPTION_SCALE, 4);
 }
 
 MenuOption::~MenuOption()

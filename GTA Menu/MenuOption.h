@@ -3,6 +3,7 @@
 #include <string>
 #include "HudElem.h"
 #include "Config.h"
+#include "UI.h"
 
 class Menu;
 typedef std::function<void(void* param)> OptionCallback;
@@ -19,7 +20,7 @@ public:
 	OptionCallback Callback;
 	std::string Text;
 	std::string Description;
-	HudText Elem;
+	UIText Elem;
 	uint32_t Position;
 	Menu* Parent;
 };

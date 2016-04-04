@@ -10,8 +10,8 @@ MenuOptionSubmenu::MenuOptionSubmenu(std::string name)
 
 void MenuOptionSubmenu::Render()
 {
-	Elem.SetText(Text, hudelem_color_t(0xFFFFFFFF), MENU_X_POSITION, MENU_Y_POSITION + ((float)Position * MENU_ITEM_DIFFERENCE), DEFAULT_OPTION_SCALE, 4);
-	Elem.Render();
+//	Elem.SetText(Text, hudelem_color_t(0xFFFFFFFF), MENU_X_POSITION, MENU_Y_POSITION + ((float)Position * MENU_ITEM_DIFFERENCE), DEFAULT_OPTION_SCALE, 4);
+//	Elem.Render();
 }
 
 void MenuOptionSubmenu::Call()

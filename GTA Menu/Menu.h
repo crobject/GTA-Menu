@@ -4,6 +4,7 @@
 #include "MenuOption.h"
 #include "MenuOptionSubmenu.h"
 #include "MenuOptionToggle.h"
+#include "UI.h"
 
 class Client;
 
@@ -21,7 +22,7 @@ public:
 
 	Client* Owner;
 
-	HudText* TitleElem;
-	HudMaterial* BackgroundElem;
-	HudMaterial* ScrollbarElem;
+	UIText TitleElem;
+	UIContainer BackgroundElem;
+	UIRectangle ScrollbarElem;
 };

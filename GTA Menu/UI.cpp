@@ -184,7 +184,7 @@ void UIRectangle::Draw(Size_t offset)
 	const float x = ((static_cast<float>(Position.m_x) + offset.m_width) / GTAUI::WIDTH) + w * 0.5f;
 	const float y = ((static_cast<float>(Position.m_y) + offset.m_height) / GTAUI::HEIGHT) + h * 0.5f;
 
-	GRAPHICS::DRAW_RECT(x, y, w, h, Color.r, Color.g, Color.b, Color.a);
+	//GRAPHICS::DRAW_RECT(x, y, w, h, Color.r, Color.g, Color.b, Color.a);
 }
 
 UIContainer::UIContainer() : UIRectangle()
