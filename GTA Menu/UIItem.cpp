@@ -31,3 +31,19 @@ void UIItemToggle::OnClick()
 UIItemToggle::~UIItemToggle()
 {
 }
+
+UIItemSubMenu::UIItemSubMenu(std::string title, std::string description, Client* client, std::function<UIMenu*()> createMenu) : UIItem(title, description, []{})
+{
+	m_client = client;
+	m_createMenu = createMenu;
+}
+
+void UIItemSubMenu::OnClick()
+{
+	if(m_client && m_createMenu)
+	{
+		auto menu = m_createMenu();
+		m_menu->SetParent(parent);
+		m_client->SetMenu(menu);
+	}
+}

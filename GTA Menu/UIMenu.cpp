@@ -49,6 +49,7 @@ void UIMenu::ScrollUp()
 void UIMenu::Add(UIItem* elem)
 {
 	elem->SetPosition(Point(m_position.m_x, m_position.m_y + (30 * (m_container.GetItems().size() + 1))));
+	elem->SetParent(this);
 	m_container.AddItem(elem);
 	m_currentItem = m_container.GetItems().begin();//stupid hack 
 }

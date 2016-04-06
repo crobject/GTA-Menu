@@ -13,12 +13,12 @@ public:
 
 	void ScrollDown();
 	void ScrollUp();
+	void SetMenu(UIMenu* menu);
 	uint32_t GetCurrentItemIndex();
 	~Client();
 
 	UIMenu* CurrentMenu;
 	UIMenu* PreviousMenu;
 	UIMenu* BaseMenu;
-	std::vector<UIElement*>::iterator CurrentItem;
 	bool GodMode;
 };

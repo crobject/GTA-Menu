@@ -48,27 +48,29 @@ void Client::InitializeMenu()
 	Point sub_title_point = Point(110, 100);
 	CurrentMenu = BaseMenu = new UIMenu(UIText("Main Menu", title_point, DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
 		UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {});
-	CurrentItem = CurrentMenu->GetContainer().GetItems().begin();
 
-	CurrentMenu->Add(new UIItem("Quick Actions", "Very useful and common actions that effect your player", [&](void* param)->void
+	CurrentMenu->Add(new UIItemSubMenu("Quick Actions", "Very useful and common actions that effect your player", [&]()->UIMenu*
 	{
-	}));
-	CurrentMenu->Add(new UIItemToggle("God Mode", "Toggle Invincibility", [&](void* param)->void
-	{
-		PLAYER::SET_PLAYER_INVINCIBLE(PLAYER::PLAYER_PED_ID(), GodMode);
-	}, &GodMode));
-
-	CurrentMenu->Add(new UIItem("Spawn T20", "spawn a cool car", [&](void* param)->void
-	{
-		Hash hash = GAMEPLAY::GET_HASH_KEY("t20");
-		Vector3 pos = ENTITY::GET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), TRUE);
-		STREAMING::REQUEST_MODEL(hash);
-		if (STREAMING::HAS_MODEL_LOADED(hash))
+		auto menu = new UIMenu(UIText("Quick Actions", title_point, DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
+			UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {});
+		menu->Add(new UIItemToggle("God Mode", "Toggle Invincibility", [&](void* param)->void
 		{
-			uint32_t VehicleHandle = VEHICLE::CREATE_VEHICLE(hash, pos.x, pos.y, pos.z, 0, FALSE, FALSE);
-			STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(hash);
-		}
-	}));
+			PLAYER::SET_PLAYER_INVINCIBLE(PLAYER::PLAYER_PED_ID(), GodMode);
+		}, &GodMode));
+
+		menu->Add(new UIItem("Spawn T20", "spawn a cool car", [&](void* param)->void
+		{
+			Hash hash = GAMEPLAY::GET_HASH_KEY("t20");
+			Vector3 pos = ENTITY::GET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), TRUE);
+			STREAMING::REQUEST_MODEL(hash);
+			if (STREAMING::HAS_MODEL_LOADED(hash))
+			{
+				uint32_t VehicleHandle = VEHICLE::CREATE_VEHICLE(hash, pos.x, pos.y, pos.z, 0, FALSE, FALSE);
+				STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(hash);
+			}
+		}));
+		return menu;
+	}));	
 
 	/*CurrentMenu->AddOption(new MenuOption("Self Menu", "Actions that effect the player using the menu", [&](void* param)->void
 	{
@@ -106,6 +108,11 @@ void Client::ToggleMenu()
 		delete CurrentMenu;
 		CurrentMenu = nullptr;
 	}
+}
+
+void Client::SetMenu(UIMenu* menu)
+{
+	CurrentMenu = menu;
 }
 
 void Client::ScrollDown()
