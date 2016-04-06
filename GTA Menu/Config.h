@@ -20,6 +20,7 @@ const float MENU_HEIGHT = 0.083f;
 const float DEFAULT_TITLE_SCALE = 1.20;
 const float DEFAULT_OPTION_SCALE = 0.70;
 
+const float DEFAULT_FONT_SCALE = 0.6f;
 const unsigned int NEWSBAR_MOVE_TIME = 1000 * 12;// 12 seconds
 const unsigned int FLASHTEXT_MOVE_TIME = 100 * 3;
 

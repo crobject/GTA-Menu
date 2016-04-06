@@ -131,7 +131,7 @@ public:
 	void Hide();
 	Notification(int handle);
 
-private:
+protected:
 	int _handle;
 };
 
@@ -163,9 +163,19 @@ public:
 	virtual void Draw() = NULL;
 	virtual void Draw(Size_t offset) = NULL;
 
+	bool GetEnabled() { return Enabled; }
+	void SetEnabled(bool val) { Enabled = val; }
+	Point GetPosition() { return Position; }
+	void SetPosition(Point val) { Position = val; }
+	Color_t GetColor() { return Color; }
+	void SetColor(Color_t val) { Color = val; }
+	Size_t GetSize() { return Size; }
+	void SetSize(Size_t val) { Size = val; }
+protected:
 	bool Enabled;
 	Point Position;
 	Color_t Color;
+	Size_t Size;
 };
 
 class UIText : public UIElement
@@ -176,16 +186,29 @@ public:
 	UIText(std::string caption, Point position, float scale, Color_t color);
 	UIText(std::string caption, Point position, float scale, Color_t color, Font_t font, bool centered);
 	UIText(std::string caption, Point position, float scale, Color_t color, Font_t font, bool centered, bool shadow, bool outline);
+	virtual std::string GetText() { return Text; }
+	void SetText(std::string val) { Text = val; }
+	Font_t GetFont() { return Font; }
+	void SetFont(Font_t val) { Font = val; }
+	float GetScale() { return Scale; }
+	void SetScale(float val) { Scale = val; }
+	bool GetCentered() { return Centered; }
+	void SetCentered(bool val) { Centered = val; }
+	bool GetShadow() { return Shadow; }
+	void SetShadow(bool val) { Shadow = val; }
+	bool GetOutline() { return Outline; }
+	void SetOutline(bool val) { Outline = val; }
 
-	std::string Caption;
+	void Draw();
+	void Draw(Size_t offset);
+protected:
+	std::string Text;
+
 	Font_t Font;
 	float Scale;
 	bool Centered;
 	bool Shadow;
 	bool Outline;
-
-	void Draw();
-	void Draw(Size_t offset);
 };
 
 class UIRectangle : public UIElement
@@ -195,7 +218,6 @@ public:
 	UIRectangle(Point position, Size_t size);
 	UIRectangle(Point position, Size_t size, Color_t color);
 
-	Size_t Size;
 	void Draw();
 	void Draw(Size_t offset);
 };
@@ -206,12 +228,12 @@ public:
 	UIContainer();
 	UIContainer(Point position, Size_t size);
 	UIContainer(Point position, Size_t size, Color_t color);
-
-	std::vector<UIElement*> Items;
-
 	void AddItem(UIElement* elem);
 	void Draw();
 	void Draw(Size_t offset);
+	std::vector<UIElement*>& GetItems() { return Items; }
+protected:
+	std::vector<UIElement*> Items;
 };
 
 class UISprite : public UIElement
@@ -222,17 +244,17 @@ public:
 	UISprite(std::string textureDict, std::string textureName, Size_t scale, Point position, Color_t color, float rotation);
 
 	~UISprite();
-
-	bool Enabled;
-	Point Position;
-	Color_t Color;
-	Size_t Scale;
-	float Rotation;
-
+	void SetScale(Size_t val) { Scale = val; }
+	Size_t GetScale() { return Scale; }
+	void SetRotation(float val) { Rotation = val; }
+	float GetRotation() { return Rotation; }
 	void Draw();
 	void Draw(Size_t offset);
 
-private:
+protected:
+	Size_t Scale;
+	float Rotation;
+
 	std::string _textureDict;
 	std::string _textureName;
 };

@@ -153,10 +153,6 @@
     <ClInclude Include="GTA Menu.h" />
     <ClInclude Include="HudElem.h" />
     <ClInclude Include="keyboard.h" />
-    <ClInclude Include="Menu.h" />
-    <ClInclude Include="MenuOption.h" />
-    <ClInclude Include="MenuOptionSubmenu.h" />
-    <ClInclude Include="MenuOptionToggle.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="UI.h" />
@@ -182,10 +178,6 @@
     <ClCompile Include="GTA Menu.cpp" />
     <ClCompile Include="HudElem.cpp" />
     <ClCompile Include="keyboard.cpp" />
-    <ClCompile Include="Menu.cpp" />
-    <ClCompile Include="MenuOption.cpp" />
-    <ClCompile Include="MenuOptionSubmenu.cpp" />
-    <ClCompile Include="MenuOptionToggle.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

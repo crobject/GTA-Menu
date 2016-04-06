@@ -1,5 +1,6 @@
 #pragma once
 #include "Menu.h"
+#include "UIMenu.h"
 
 class Client
 {
@@ -15,9 +16,9 @@ public:
 	uint32_t GetCurrentItemIndex();
 	~Client();
 
-	Menu* CurrentMenu;
-	Menu* PreviousMenu;
-	Menu* BaseMenu;
-	std::vector<MenuOption*>::iterator CurrentItem;
+	UIMenu* CurrentMenu;
+	UIMenu* PreviousMenu;
+	UIMenu* BaseMenu;
+	std::vector<UIElement*>::iterator CurrentItem;
 	bool GodMode;
 };

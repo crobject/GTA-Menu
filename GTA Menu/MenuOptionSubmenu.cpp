@@ -23,7 +23,7 @@ void MenuOptionSubmenu::Call()
 			delete Parent->Owner->PreviousMenu;
 		}
 		Parent->Owner->PreviousMenu = Parent->Owner->CurrentMenu;
-		Parent->Owner->CurrentMenu = new Menu(Text, Parent->Owner);
+		//Parent->Owner->CurrentMenu = new UIMenu(Text, Parent->Owner);
 	}
 	if (Callback)
 		Callback(this);

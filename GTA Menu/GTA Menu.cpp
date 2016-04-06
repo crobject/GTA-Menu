@@ -17,7 +17,7 @@ void ScriptMain()
 	{
 		client.ProcessInput();
 		if (client.CurrentMenu)
-			client.CurrentMenu->Render();
+			client.CurrentMenu->Draw();
 		client.RunThreads();
 		WAIT(0);
 	}

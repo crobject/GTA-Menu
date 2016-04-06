@@ -65,7 +65,7 @@ UIText::UIText()
 UIText::UIText(std::string caption, Point position, float scale)
 {
 	Enabled = true;
-	Caption = caption;
+	Text = caption;
 	Position = position;
 	Scale = scale;
 	Color = Color_t(20, 20, 20, 200);
@@ -78,7 +78,7 @@ UIText::UIText(std::string caption, Point position, float scale)
 UIText::UIText(std::string caption, Point position, float scale, Color_t color)
 {
 	Enabled = true;
-	Caption = caption;
+	Text = caption;
 	Position = position;
 	Scale = scale;
 	Color = color;
@@ -91,7 +91,7 @@ UIText::UIText(std::string caption, Point position, float scale, Color_t color)
 UIText::UIText(std::string caption, Point position, float scale, Color_t color, Font_t font, bool centered)
 {
 	Enabled = true;
-	Caption = caption;
+	Text = caption;
 	Position = position;
 	Scale = scale;
 	Color = color;
@@ -104,7 +104,7 @@ UIText::UIText(std::string caption, Point position, float scale, Color_t color, 
 UIText::UIText(std::string caption, Point position, float scale, Color_t color, Font_t font, bool centered, bool shadow, bool outline)
 {
 	Enabled = true;
-	Caption = caption;
+	Text = caption;
 	Position = position;
 	Scale = scale;
 	Color = color;
@@ -142,7 +142,7 @@ void UIText::Draw(Size_t offset)
 	UI::SET_TEXT_COLOUR(Color.r, Color.g, Color.b, Color.a);
 	UI::SET_TEXT_CENTRE(Centered ? 1 : 0);
 	UI::_SET_TEXT_ENTRY("STRING");
-	UI::_ADD_TEXT_COMPONENT_STRING((char*)Caption.c_str());
+	UI::_ADD_TEXT_COMPONENT_STRING((char*)Text.c_str());
 	UI::_DRAW_TEXT(x, y);
 }
 
@@ -184,7 +184,7 @@ void UIRectangle::Draw(Size_t offset)
 	const float x = ((static_cast<float>(Position.m_x) + offset.m_width) / GTAUI::WIDTH) + w * 0.5f;
 	const float y = ((static_cast<float>(Position.m_y) + offset.m_height) / GTAUI::HEIGHT) + h * 0.5f;
 
-	//GRAPHICS::DRAW_RECT(x, y, w, h, Color.r, Color.g, Color.b, Color.a);
+	GRAPHICS::DRAW_RECT(x, y, w, h, Color.r, Color.g, Color.b, Color.a);
 }
 
 UIContainer::UIContainer() : UIRectangle()

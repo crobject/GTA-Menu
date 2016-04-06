@@ -1,27 +1,22 @@
 #include "stdafx.h"
 #include "UIItem.h"
 
-
-UIItem::UIItem(std::string title, std::string description, std::function<void(void*)> fn)
+UIItem::UIItem(std::string title, std::string description, OptionCallback fn) : UIText(title, Point(0, 0), DEFAULT_FONT_SCALE, Color_t(255, 255, 255, 255))
 {
-	Caption = title;
-	m_description = description;
 	m_fn = fn;
-	Color = Color_t(255, 255, 255, 255);
 }
 
 void UIItem::OnClick()
 {
 	if (m_fn)
-		m_fn(this);
+		m_fn((void*)this);
 }
-
 
 UIItem::~UIItem()
 {
 }
 
-UIItemToggle::UIItemToggle(std::string title, std::string description, std::function<void(void*)> fn, bool* toggle) : UIItem(title, description, fn)
+UIItemToggle::UIItemToggle(std::string title, std::string description, OptionCallback fn, bool* toggle) : UIItem(title, description, fn)
 {
 	m_toggle = toggle;
 }
@@ -35,5 +30,4 @@ void UIItemToggle::OnClick()
 
 UIItemToggle::~UIItemToggle()
 {
-
 }

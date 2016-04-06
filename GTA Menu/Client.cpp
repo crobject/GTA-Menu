@@ -19,16 +19,22 @@ void Client::ProcessInput()
 	}
 	if (IsKeyJustUp(VK_NUMPAD5))
 	{
-		if (CurrentMenu && *CurrentItem)
-			(*CurrentItem)->Call();
+		if (CurrentMenu)
+		{
+			auto currentItem = CurrentMenu->GetCurrentItem();
+			if (*currentItem)
+				((UIItem*)(*currentItem))->OnClick();
+		}
 	}
 	if (IsKeyJustUp(VK_NUMPAD2))
 	{
-		ScrollDown();
+		if (CurrentMenu)
+			CurrentMenu->ScrollDown();
 	}
 	if (IsKeyJustUp(VK_NUMPAD8))
 	{
-		ScrollUp();
+		if (CurrentMenu)
+			CurrentMenu->ScrollUp();
 	}
 	if (IsKeyJustUp(VK_DELETE) && IsKeyJustUp(VK_END))
 	{
@@ -38,30 +44,33 @@ void Client::ProcessInput()
 
 void Client::InitializeMenu()
 {
-	CurrentMenu = BaseMenu = new Menu("Main Menu", this);
-	CurrentItem = CurrentMenu->Options.begin();
+	Point title_point = Point(100, 75);
+	Point sub_title_point = Point(110, 100);
+	CurrentMenu = BaseMenu = new UIMenu(UIText("Main Menu", title_point, DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
+		UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {});
+	CurrentItem = CurrentMenu->GetContainer().GetItems().begin();
 
-	CurrentMenu->AddOption(new MenuOption("Quick Actions", "Very useful and common actions that effect your player", [&](void* param)->void
+	CurrentMenu->Add(new UIItem("Quick Actions", "Very useful and common actions that effect your player", [&](void* param)->void
 	{
-		CurrentMenu->AddOption(new MenuOptionToggle("God Mode", &GodMode, [&](void* param)->void
-		{
-			PLAYER::SET_PLAYER_INVINCIBLE(PLAYER::PLAYER_PED_ID(), GodMode);
-		}));
+	}));
+	CurrentMenu->Add(new UIItemToggle("God Mode", "Toggle Invincibility", [&](void* param)->void
+	{
+		PLAYER::SET_PLAYER_INVINCIBLE(PLAYER::PLAYER_PED_ID(), GodMode);
+	}, &GodMode));
 
-		CurrentMenu->AddOption(new MenuOption("Spawn T20", "spawn a cool car", [&](void* param)->void
+	CurrentMenu->Add(new UIItem("Spawn T20", "spawn a cool car", [&](void* param)->void
+	{
+		Hash hash = GAMEPLAY::GET_HASH_KEY("t20");
+		Vector3 pos = ENTITY::GET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), TRUE);
+		STREAMING::REQUEST_MODEL(hash);
+		if (STREAMING::HAS_MODEL_LOADED(hash))
 		{
-			Hash hash = GAMEPLAY::GET_HASH_KEY("t20");
-			Vector3 pos = ENTITY::GET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), TRUE);
-			STREAMING::REQUEST_MODEL(hash);
-			if (STREAMING::HAS_MODEL_LOADED(hash))
-			{
-				uint32_t VehicleHandle = VEHICLE::CREATE_VEHICLE(hash, pos.x, pos.y, pos.z, 0, FALSE, FALSE);
-				STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(hash);
-			}
-		}));
+			uint32_t VehicleHandle = VEHICLE::CREATE_VEHICLE(hash, pos.x, pos.y, pos.z, 0, FALSE, FALSE);
+			STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(hash);
+		}
 	}));
 
-	CurrentMenu->AddOption(new MenuOption("Self Menu", "Actions that effect the player using the menu", [&](void* param)->void
+	/*CurrentMenu->AddOption(new MenuOption("Self Menu", "Actions that effect the player using the menu", [&](void* param)->void
 	{
 	}));
 
@@ -83,7 +92,7 @@ void Client::InitializeMenu()
 
 	CurrentMenu->AddOption(new MenuOption("Recovery Menu", "Modify your stats", [&](void* param)->void
 	{
-	}));
+	}));*/
 }
 
 void Client::ToggleMenu()
