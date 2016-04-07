@@ -142,7 +142,7 @@ void UIText::Draw(Size_t offset)
 	UI::SET_TEXT_COLOUR(Color.r, Color.g, Color.b, Color.a);
 	UI::SET_TEXT_CENTRE(Centered ? 1 : 0);
 	UI::_SET_TEXT_ENTRY("STRING");
-	UI::_ADD_TEXT_COMPONENT_STRING((char*)Text.c_str());
+	UI::_ADD_TEXT_COMPONENT_STRING((char*)GetText().c_str());
 	UI::_DRAW_TEXT(x, y);
 }
 

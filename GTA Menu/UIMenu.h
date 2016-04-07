@@ -5,6 +5,7 @@
 
 #include "UI.h"
 
+class UIItem;
 class UIMenu
 {
 public:
@@ -15,8 +16,9 @@ public:
 	void ScrollDown();
 	void ScrollUp();
 	void Add(UIItem* elem);
-	UIContainer GetContainer() { return m_container; }
+	UIContainer& GetContainer() { return m_container; }
 	std::vector<UIElement*>::iterator GetCurrentItem() { return m_currentItem; }
+	void SetParent(UIMenu* parent) { m_parent = parent; }
 private:
 	UIText m_title;
 	UIText m_caption;
@@ -28,4 +30,5 @@ private:
 
 	std::function<void()> m_onOpen;
 	std::function<void()> m_onClose;
+	UIMenu* m_parent;
 };

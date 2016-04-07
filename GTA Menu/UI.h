@@ -5,7 +5,7 @@
 
 union Color_t
 {
-	Color_t(char r, char g, char b, char a)
+	Color_t(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 	{
 		this->r = r;
 		this->g = g;
@@ -19,10 +19,10 @@ union Color_t
 	Color_t() {}
 	struct
 	{
-		char r;
-		char g;
-		char b;
-		char a;
+		unsigned char r;
+		unsigned char g;
+		unsigned char b;
+		unsigned char a;
 	};
 	int rgba;
 };

@@ -6,6 +6,7 @@
 #include <string>
 #include <ctime>
 #include "Client.h"
+#include "UIMenu.h"
 
 bool running = true;
 Client client;

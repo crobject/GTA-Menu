@@ -1,9 +1,11 @@
 #pragma once
 #include <functional>
 
-#include "UIMenu.h"
+#include "Client.h"
 #include "Config.h"
 
+class UIMenu;
+typedef std::function<UIMenu*(void)> MenuCallback;
 typedef std::function<void(void* param)> OptionCallback;
 class UIItem : public UIText
 {
@@ -14,8 +16,8 @@ public:
 	virtual void OnLeave() {}
 	virtual void OnRightScroll() {}
 	virtual void OnLeftScroll() {}
-	void SetParent(UIMenu* parent){ m_parent = parent; }
-	UIMenu* GetParent(){ return m_parent; }
+	void SetParent(UIMenu* parent);
+	UIMenu* GetParent();
 	~UIItem();
 protected:
 	std::string m_description;
@@ -29,6 +31,7 @@ public:
 	UIItemToggle(std::string title, std::string description, OptionCallback fn, bool* toggle);
 	void OnClick();
 	std::string GetText() { return Text + (std::string)(*m_toggle ? "[On]" : "[Off]"); };
+	bool* GetToggle() { return m_toggle; }
 	~UIItemToggle();
 private:
 	bool* m_toggle;
@@ -37,10 +40,21 @@ private:
 class UIItemSubMenu : public UIItem
 {
 public:
-	UIItemSubMenu(std::string title, std::string description, Client* client, std::function<UIMenu*()> createMenu);
+	UIItemSubMenu(std::string title, std::string description, Client* client, MenuCallback createMenu);
 	void OnClick();
 	~UIItemSubMenu();
 private:
 	Client* m_client;
-	std::function<UIMenu*(Client*)> m_createMenu;
+	MenuCallback m_createMenu;
+};
+
+class UIItemSuperSelect : public UIItem
+{
+public:
+	UIItemSuperSelect(std::string title, std::string description);
+	void OnClick();
+	std::string GetText() { return Text + (std::string)(m_selected ? "[On]" : "[Off]"); };
+	~UIItemSuperSelect();
+private:
+	bool m_selected;
 };
