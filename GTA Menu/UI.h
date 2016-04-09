@@ -229,11 +229,25 @@ public:
 	UIContainer(Point position, Size_t size);
 	UIContainer(Point position, Size_t size, Color_t color);
 	void AddItem(UIElement* elem);
-	void Draw();
-	void Draw(Size_t offset);
+	virtual void Draw();
+	virtual void Draw(Size_t offset);
 	std::vector<UIElement*>& GetItems() { return Items; }
 protected:
 	std::vector<UIElement*> Items;
+};
+
+class UIPagedContainer : public UIContainer
+{
+public:
+	UIPagedContainer();
+	UIPagedContainer(Point position, Size_t size);
+	UIPagedContainer(Point position, Size_t size, Color_t color, uint32_t pageSize = 15);
+	void Draw(uint32_t page);
+	void Draw(Size_t offset);
+	uint32_t GetPageCount() { return Items.size() / m_pageSize; }
+	uint32_t GetPageSize() { return m_pageSize; }
+private:
+	uint32_t m_pageSize;
 };
 
 class UISprite : public UIElement

@@ -9,7 +9,8 @@ UIMenu::UIMenu()
 
 UIMenu::UIMenu(const UIText& title, const UIText& caption, Point position, Size_t size, std::function<void()> onOpen, std::function<void()> onClose)
 {
-	m_container = UIContainer(position, size, Color_t(0, 0, 0, 120));
+	m_pageNum = 0;
+	m_container = UIPagedContainer(position, size, Color_t(0, 0, 0, 120));
 	auto p = position;
 	p.m_y += 40;
 	m_scrollbar = UIRectangle(p, Size_t(size.m_width, 30), Color_t(255, 255, 255, 255));
@@ -26,7 +27,7 @@ void UIMenu::Draw()
 	m_scrollbar.Draw();
 	m_title.Draw();
 	m_caption.Draw();
-	m_container.Draw();
+	m_container.Draw(m_pageNum);
 }
 
 void UIMenu::ScrollDown()
@@ -36,7 +37,7 @@ void UIMenu::ScrollDown()
 	else
 		m_currentItem = m_container.GetItems().begin();
 	auto dist = std::distance(m_container.GetItems().begin(), m_currentItem);
-	m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (30 * (dist + 1))));
+	m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (m_ItemSize * (dist + 1))));
 }
 
 void UIMenu::ScrollUp()
@@ -46,13 +47,33 @@ void UIMenu::ScrollUp()
 	else
 		m_currentItem = m_container.GetItems().end() - 1;
 	auto dist = std::distance(m_container.GetItems().begin(), m_currentItem);
-	m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (30 * (dist + 1))));
+	m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (m_ItemSize * (dist + 1))));
 
+}
+
+void UIMenu::PageRight()
+{
+	if (m_pageNum < m_container.GetPageCount())
+	{
+		m_pageNum++;
+		auto begin = m_container.GetItems().begin() + (m_pageNum * m_container.GetPageSize());
+		m_currentItem = begin;
+	}
+
+}
+void UIMenu::PageLeft()
+{
+	if (m_pageNum > 0)
+	{
+		m_pageNum--;
+		auto begin = m_container.GetItems().begin() + (m_pageNum * m_container.GetPageSize());
+		m_currentItem = begin;
+	}
 }
 
 void UIMenu::Add(UIItem* elem)
 {
-	elem->SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (30 * (m_container.GetItems().size() + 1))));
+	elem->SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (m_ItemSize * ((m_container.GetItems().size() % m_container.GetPageSize()) + 1))));
 	elem->SetParent(this);
 	m_container.AddItem(elem);
 	m_currentItem = m_container.GetItems().begin();//stupid hack 

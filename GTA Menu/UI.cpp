@@ -220,6 +220,44 @@ void UIContainer::AddItem(UIElement* elem)
 {
 	Items.push_back(elem);
 }
+
+UIPagedContainer::UIPagedContainer() : UIContainer()
+{
+
+}
+
+UIPagedContainer::UIPagedContainer(Point position, Size_t size)
+{
+}
+
+UIPagedContainer::UIPagedContainer(Point position, Size_t size, Color_t color, uint32_t pageSize): UIContainer(position, size, color), m_pageSize(pageSize)
+{
+
+}
+
+void UIPagedContainer::Draw(uint32_t page)
+{
+	UIContainer::UIRectangle::Draw();
+
+	if (page * m_pageSize > Items.size())
+	{
+		return;
+	}
+
+	auto begin = Items.begin() + (page * m_pageSize);
+	auto i = begin;
+	auto pageEnd = min(m_pageSize, std::distance(begin, Items.end()));
+	while (i != Items.end() && i < begin + pageEnd && *i)
+	{
+		(*i)->Draw();
+		i++;
+	}
+}
+
+void UIPagedContainer::Draw(Size_t offset)
+{
+
+}
 UISprite::UISprite(std::string textureDict, std::string textureName, Size_t scale, Point position)
 {
 	Enabled = true;
