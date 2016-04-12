@@ -15,17 +15,15 @@ public:
 	void Draw();
 	void ScrollDown();
 	void ScrollUp();
-	void PageRight();
-	void PageLeft();
 	void Add(UIItem* elem);
-	UIPagedContainer& GetContainer() { return m_container; }
+	UIContainer& GetContainer() { return m_container; }
 	std::vector<UIElement*>::iterator GetCurrentItem() { return m_currentItem; }
 	void SetParent(UIMenu* parent) { m_parent = parent; }
 private:
 	const uint32_t m_ItemSize = 30;
 	UIText m_title;
 	UIText m_caption;
-	UIPagedContainer m_container;
+	UIContainer m_container;
 	UIRectangle m_scrollbar;
 	Point m_position;
 	Size_t m_size;

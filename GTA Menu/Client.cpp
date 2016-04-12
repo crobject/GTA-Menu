@@ -45,16 +45,6 @@ void Client::ProcessInput()
 		if (CurrentMenu)
 			CurrentMenu->ScrollUp();
 	}
-	if (IsKeyJustUp(VK_NUMPAD9))
-	{
-		if (CurrentMenu)
-			CurrentMenu->PageRight();
-	}
-	if (IsKeyJustUp(VK_NUMPAD7))
-	{
-		if (CurrentMenu)
-			CurrentMenu->PageLeft();
-	}
 	if (IsKeyJustUp(VK_DELETE) && IsKeyJustUp(VK_END))
 	{
 		TERMINATE();

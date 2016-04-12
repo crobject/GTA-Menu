@@ -227,13 +227,13 @@ class UIContainer : public UIRectangle
 public:
 	UIContainer();
 	UIContainer(Point position, Size_t size);
-	UIContainer(Point position, Size_t size, Color_t color);
+	UIContainer(Point position, Size_t size, Color_t color, uint32_t pageSize = 15);
 	void AddItem(UIElement* elem);
-	virtual void Draw();
-	virtual void Draw(Size_t offset);
+	virtual void Draw(const std::vector<UIElement*>::iterator& currentItem);
 	std::vector<UIElement*>& GetItems() { return Items; }
 protected:
 	std::vector<UIElement*> Items;
+	uint32_t m_pageSize;
 };
 
 class UIPagedContainer : public UIContainer

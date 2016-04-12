@@ -193,28 +193,54 @@ UIContainer::UIContainer() : UIRectangle()
 UIContainer::UIContainer(Point position, Size_t size) : UIRectangle(position, size)
 {
 }
-UIContainer::UIContainer(Point position, Size_t size, Color_t color) : UIRectangle(position, size, color)
+UIContainer::UIContainer(Point position, Size_t size, Color_t color, uint32_t pageSize) : UIRectangle(position, size, color), m_pageSize(pageSize)
 {
 }
 
-void UIContainer::Draw()
-{
-	Draw(Size_t());
-}
-void UIContainer::Draw(Size_t offset)
+
+void UIContainer::Draw(const std::vector<UIElement*>::iterator& currentItem)
 {
 	if (!Enabled)
 	{
 		return;
 	}
 
-	UIRectangle::Draw(offset);
+	UIRectangle::Draw(Size_t());
 
-	for each (auto item in Items)
+	auto dist = std::distance(Items.begin(), currentItem);
+	if (dist > m_pageSize - 1)
 	{
-		auto point = offset;
-		item->Draw();
+		auto begin = Items.begin() + (dist - m_pageSize) + 1;
+		auto i = begin;
+		uint32_t screenindex = 0;
+		auto pageEnd = min(m_pageSize, std::distance(begin, Items.end()));
+		while (i != Items.end() && i < begin + pageEnd)
+		{
+			auto pos = Point(Position.m_x, Position.m_y + 40 + (screenindex * 30));
+			//TODO: pass a value for the difference
+			(*i)->SetPosition(pos);
+			(*i)->Draw();
+			screenindex++;
+			i++;
+
+		}
 	}
+	else
+	{
+		uint32_t screenindex = 0;
+		auto begin = Items.begin();
+		auto i = begin;
+		auto pageEnd = min(m_pageSize, std::distance(begin, Items.end()));
+		while (i != Items.end() && i < begin + pageEnd)
+		{
+			auto pos = Point(Position.m_x, Position.m_y + 40 + (screenindex * 30));
+			(*i)->SetPosition(pos);
+			(*i)->Draw();
+			screenindex++;
+			i++;
+		}
+	}
+		
 }
 void UIContainer::AddItem(UIElement* elem)
 {
