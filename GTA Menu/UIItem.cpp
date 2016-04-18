@@ -83,3 +83,37 @@ UIItemSuperSelect::~UIItemSuperSelect()
 {
 
 }
+
+
+UIItemList::UIItemList(std::string title, std::string description, OptionCallback cb, std::vector<std::string> items, bool passByIndex) : UIItem(title, description, cb)
+{
+	m_callByIndex = passByIndex;
+	m_list = std::vector<std::string>(items);
+	m_currentItem = m_list.begin();
+}
+void UIItemList::OnClick()
+{
+	if (m_callByIndex)
+		m_fn((void*)std::distance(m_list.begin(), m_currentItem));
+	else
+		m_fn((void*)&(*m_currentItem));
+}
+void UIItemList::OnRightScroll()
+{
+	if (m_currentItem != m_list.end() - 1)
+		m_currentItem++;
+	else
+		m_currentItem = m_list.begin();
+}
+void UIItemList::OnLeftScroll()
+{
+	if (m_currentItem == m_list.begin())
+		m_currentItem = m_list.end() - 1;
+	else
+		m_currentItem--;
+}
+
+UIItemList::~UIItemList()
+{
+
+}

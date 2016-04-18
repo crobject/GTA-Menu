@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-
+#include <map>
 static uint32_t WeapHashes[] = { 0x99B507EA, 0x678B81B1, 0x4E875F73, 0x958A4A8F, 0x440E4788, 0x84BD7BFD, 0x1B06D571, 0x5EF9FEC4, 0x22D8FE39,
 0x99AEEB3B, 0x13532244, 0x2BE6766B, 0xEFE7E2DF, 0xBFEFFF6D, 0x83BF0278, 0xAF113F99, 0x9D07F764, 0x7FD62962, 0x1D073A89, 0x7846A318,
 0xE284C527, 0x9D61E50F, 0x3656C8C1, 0x05FC3C11, 0x0C472FE2, 0x33058E22, 0xA284510B, 0x4DD2DC56, 0xB1CA77B1, 0x687652CE, 0x42BF8A85,
@@ -121,3 +121,17 @@ static std::string pedModels[] = {
 	"u_m_y_justin","u_m_y_mani","u_m_y_militarybum","u_m_y_paparazzi","u_m_y_party_01","u_m_y_pogo_01","u_m_y_prisoner_01","u_m_y_proldriver_01","u_m_y_rsranger_01",
 	"u_m_y_sbike","u_m_y_staggrm_01","u_m_y_tattoo_01", "u_m_y_zombie_01" 
 };
+
+static std::string propNames[] = {
+	"prop_windmill_01",
+"prop_Ld_ferris_wheel","p_tram_crash_s","p_oil_slick_01","p_ld_stinger_s","p_ld_soc_ball_01","p_parachute1_s","p_cablecar_s","prop_beach_fire",
+"prop_lev_des_barge_02,","prop_sculpt_fix","p_v_43_safe_s","prop_a_base_bars_01","prop_beach_bars_01","prop_air_bigradar","prop_weed_pallet",
+"prop_large_gold","p_seabed_whalebones","Prop_weed_01","prop_roller_car_01","prop_water_corpse_01,02","prop_dummy_01","prop_atm_01",
+"prop_ind_crusher","u_m_y_babyd","mp_m_niko_01","mp_m_claude_01","mp_m_marston_01","mp_m_misty_01","s_m_m_bouncer_01","s_m_y_cop_01","s_m_y_marine_01"
+,"u_m_m_jesus_01","mp_f_deadhooker","hc_hacker","hc_gunman","a_m_m_og_boss_01","hei_prop_carrier_docklight_01","hei_prop_carrier_liferafts",
+"hei_prop_carrier_ord_03","hei_prop_carrier_defense_02","hei_prop_carrier_defense_01","hei_prop_carrier_radar_1","hei_prop_carrier_radar_2",
+"hei_prop_hei_bush_lrg_01","hei_prop_hei_bush_lrg_02", "hei_prop_hei_bust_01",
+"hei_prop_hei_log_break_01","hei_prop_heist_emp","hei_prop_heist_tug","hei_prop_wall_alarm_on","hei_prop_wall_light_10a_cr","prop_old_farm_03","prop_juicestand",
+"prop_swiss_ball_01","p_oil_pjack_01_s","p_oil_pjack_02_s","p_oil_pjack_03_s","prop_roofvent_06a","prop_roofvent_14a","root_scroll_anim_skel","prop_doghouse_01" };
+
+static std::map<uint32_t, std::string> pedTypes = { { 0, "Michael" },{ 1, "Franklin" },{ 2, "Trevor" },{ 29, "Army" },{ 28, "Animal" },{ 27, "SWAT" },{ 21, "LSFD" },{ 20, "Paramedic" },{ 6, "Cop" },{ 4, "Male" },{ 5 , "Female" },{ 26, "Human" }};

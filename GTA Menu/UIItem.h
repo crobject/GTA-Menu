@@ -3,6 +3,7 @@
 
 #include "Client.h"
 #include "Config.h"
+#include <list>
 
 class UIMenu;
 typedef std::function<UIMenu*(void)> MenuCallback;
@@ -43,7 +44,7 @@ public:
 	UIItemSubMenu(std::string title, std::string description, Client* client, MenuCallback createMenu);
 	void OnClick();
 	~UIItemSubMenu();
-private:
+protected:
 	Client* m_client;
 	MenuCallback m_createMenu;
 };
@@ -57,4 +58,19 @@ public:
 	~UIItemSuperSelect();
 private:
 	bool m_selected;
+};
+
+class UIItemList : public UIItem
+{
+public:
+	UIItemList(std::string title, std::string description, OptionCallback cb, std::vector<std::string> items, bool passByIndex=true);
+	void OnClick();
+	std::string GetText() { return Text + (std::string)"<" + *m_currentItem + (std::string)">"; }
+	void OnRightScroll();
+	void OnLeftScroll();
+	~UIItemList();
+private:
+	std::vector<std::string> m_list;
+	std::vector<std::string>::iterator m_currentItem;
+	bool m_callByIndex;	
 };

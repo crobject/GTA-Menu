@@ -12,14 +12,19 @@ public:
 	UIMenu();
 	UIMenu(const UIText& title, const UIText& caption, Point position, Size_t size, std::function<void()> onOpen, std::function<void()> onClose);
 	~UIMenu();
+	virtual void Call();
 	void Draw();
 	void ScrollDown();
 	void ScrollUp();
+	void ScrollRight();
+	void ScrollLeft();
 	void Add(UIItem* elem);
 	UIContainer& GetContainer() { return m_container; }
-	std::vector<UIElement*>::iterator GetCurrentItem() { return m_currentItem; }
+	std::vector<UIItem*>::iterator GetCurrentItem() { return m_currentItem; }
 	void SetParent(UIMenu* parent) { m_parent = parent; }
-private:
+	UIMenu* GetParent() { return m_parent; }
+	void Search(std::string filter);
+protected:
 	const uint32_t m_ItemSize = 30;
 	UIText m_title;
 	UIText m_caption;
@@ -27,9 +32,23 @@ private:
 	UIRectangle m_scrollbar;
 	Point m_position;
 	Size_t m_size;
-	std::vector<UIElement*>::iterator m_currentItem;
+	std::vector<UIItem*>::iterator m_currentItem;
 	std::function<void()> m_onOpen;
 	std::function<void()> m_onClose;
 	UIMenu* m_parent;
 	uint32_t m_pageNum;
+	std::string m_filter;
+};
+
+template <class T>
+class UIMenuStorage : public UIMenu
+{
+public:
+	UIMenuStorage(const UIText& title, const UIText& caption, Point position, Size_t size, std::function<void()> onOpen, std::function<void()> onClose, T item) : UIMenu(title, caption, position, size, onOpen, onClose)
+	{
+		m_item = item;
+	}
+	T GetItem() { return m_item; }
+private:
+	T m_item;
 };

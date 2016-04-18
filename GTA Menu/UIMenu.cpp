@@ -27,7 +27,13 @@ void UIMenu::Draw()
 	m_scrollbar.Draw();
 	m_title.Draw();
 	m_caption.Draw();
-	m_container.Draw(m_currentItem);
+	m_container.Draw(m_currentItem, m_filter);
+}
+
+void UIMenu::Call()
+{
+	if (*m_currentItem)
+		(*m_currentItem)->OnClick();
 }
 
 void UIMenu::ScrollDown()
@@ -57,6 +63,15 @@ void UIMenu::ScrollUp()
 
 }
 
+void UIMenu::ScrollRight()
+{
+	(*m_currentItem)->OnRightScroll();
+}
+
+void UIMenu::ScrollLeft()
+{
+	(*m_currentItem)->OnLeftScroll();
+}
 void UIMenu::Add(UIItem* elem)
 {
 	elem->SetParent(this);
@@ -64,6 +79,16 @@ void UIMenu::Add(UIItem* elem)
 	m_currentItem = m_container.GetItems().begin();//stupid hack 
 }
 
+void UIMenu::Search(std::string filter)
+{
+	m_filter = filter;
+}
+
 UIMenu::~UIMenu()
 {
+	for each(auto i in m_container.GetItems())
+	{
+		if(i)
+			delete i;
+	}
 }

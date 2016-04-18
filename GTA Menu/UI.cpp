@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "UI.h"
 #include "inc\natives.h"
+#include <regex>
+#include "UIItem.h"
 
 Notification::Notification(int handle) : _handle(handle)
 {
@@ -198,15 +200,14 @@ UIContainer::UIContainer(Point position, Size_t size, Color_t color, uint32_t pa
 }
 
 
-void UIContainer::Draw(const std::vector<UIElement*>::iterator& currentItem)
+void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::string filter)
 {
+	std::locale loc;
 	if (!Enabled)
 	{
 		return;
 	}
-
-	UIRectangle::Draw(Size_t());
-
+	UIRectangle::Draw(Size_t());	
 	auto dist = std::distance(Items.begin(), currentItem);
 	if (dist > m_pageSize - 1)
 	{
@@ -233,16 +234,22 @@ void UIContainer::Draw(const std::vector<UIElement*>::iterator& currentItem)
 		auto pageEnd = min(m_pageSize, std::distance(begin, Items.end()));
 		while (i != Items.end() && i < begin + pageEnd)
 		{
+			auto item_name = std::regex(filter);
+			if (filter != "" && !std::regex_match((*i)->GetText(), item_name))
+			{
+				i++;
+				continue;
+			}
 			auto pos = Point(Position.m_x, Position.m_y + 40 + (screenindex * 30));
 			(*i)->SetPosition(pos);
 			(*i)->Draw();
-			screenindex++;
+			screenindex++;				
 			i++;
 		}
 	}
 		
 }
-void UIContainer::AddItem(UIElement* elem)
+void UIContainer::AddItem(UIItem* elem)
 {
 	Items.push_back(elem);
 }

@@ -2,7 +2,7 @@
 #include <string>
 #include "inc\types.h"
 #include <vector>
-
+class UIItem;
 union Color_t
 {
 	Color_t(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
@@ -228,11 +228,11 @@ public:
 	UIContainer();
 	UIContainer(Point position, Size_t size);
 	UIContainer(Point position, Size_t size, Color_t color, uint32_t pageSize = 15);
-	void AddItem(UIElement* elem);
-	virtual void Draw(const std::vector<UIElement*>::iterator& currentItem);
-	std::vector<UIElement*>& GetItems() { return Items; }
+	void AddItem(UIItem* elem);
+	virtual void Draw(const std::vector<UIItem*>::iterator& currentItem, std::string filter = "");
+	std::vector<UIItem*>& GetItems() { return Items; }
 protected:
-	std::vector<UIElement*> Items;
+	std::vector<UIItem*> Items;
 	uint32_t m_pageSize;
 };
 

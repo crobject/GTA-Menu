@@ -2,6 +2,7 @@
 #include "Menu.h"
 #include <functional>
 #include <map>
+#include <list>
 
 class UIMenu;
 struct ScriptThread
@@ -32,6 +33,7 @@ public:
 	void ScrollUp();
 	void SetMenu(UIMenu* menu);
 	uint32_t GetCurrentItemIndex();
+	void AddObject(Object obj) { SpawnedObjects.push_back(obj); }
 	~Client();
 
 	UIMenu* CurrentMenu;
@@ -42,5 +44,14 @@ public:
 	bool SuperRun;
 	bool SuperJump;
 	bool SuperPunch;
+	bool RainbowCar;
+	bool OpenDoor;
+	bool CarBoost;
+	bool Keyboard;
+	bool UnlimitedAmmo;
+	bool NeverWanted;
+	bool InvisablePlayer;
+	bool Flymode;
 	std::map<bool*, ScriptThread*> Threads;
+	std::vector<Object> SpawnedObjects;
 };
