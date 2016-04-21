@@ -63,7 +63,7 @@ private:
 class UIItemList : public UIItem
 {
 public:
-	UIItemList(std::string title, std::string description, OptionCallback cb, std::vector<std::string> items, bool passByIndex=true);
+	UIItemList(std::string title, std::string description, OptionCallback cb, std::vector<std::string> items, bool passByIndex = true);
 	void OnClick();
 	std::string GetText() { return Text + (std::string)"<" + *m_currentItem + (std::string)">"; }
 	void OnRightScroll();
@@ -72,5 +72,5 @@ public:
 private:
 	std::vector<std::string> m_list;
 	std::vector<std::string>::iterator m_currentItem;
-	bool m_callByIndex;	
+	bool m_callByIndex;
 };

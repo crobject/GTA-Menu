@@ -199,7 +199,6 @@ UIContainer::UIContainer(Point position, Size_t size, Color_t color, uint32_t pa
 {
 }
 
-
 void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::string filter)
 {
 	std::locale loc;
@@ -207,7 +206,7 @@ void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::s
 	{
 		return;
 	}
-	UIRectangle::Draw(Size_t());	
+	UIRectangle::Draw(Size_t());
 	auto dist = std::distance(Items.begin(), currentItem);
 	if (dist > m_pageSize - 1)
 	{
@@ -223,7 +222,6 @@ void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::s
 			(*i)->Draw();
 			screenindex++;
 			i++;
-
 		}
 	}
 	else
@@ -243,11 +241,10 @@ void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::s
 			auto pos = Point(Position.m_x, Position.m_y + 40 + (screenindex * 30));
 			(*i)->SetPosition(pos);
 			(*i)->Draw();
-			screenindex++;				
+			screenindex++;
 			i++;
 		}
 	}
-		
 }
 void UIContainer::AddItem(UIItem* elem)
 {
@@ -256,16 +253,14 @@ void UIContainer::AddItem(UIItem* elem)
 
 UIPagedContainer::UIPagedContainer() : UIContainer()
 {
-
 }
 
 UIPagedContainer::UIPagedContainer(Point position, Size_t size)
 {
 }
 
-UIPagedContainer::UIPagedContainer(Point position, Size_t size, Color_t color, uint32_t pageSize): UIContainer(position, size, color), m_pageSize(pageSize)
+UIPagedContainer::UIPagedContainer(Point position, Size_t size, Color_t color, uint32_t pageSize) : UIContainer(position, size, color), m_pageSize(pageSize)
 {
-
 }
 
 void UIPagedContainer::Draw(uint32_t page)
@@ -289,7 +284,6 @@ void UIPagedContainer::Draw(uint32_t page)
 
 void UIPagedContainer::Draw(Size_t offset)
 {
-
 }
 UISprite::UISprite(std::string textureDict, std::string textureName, Size_t scale, Point position)
 {

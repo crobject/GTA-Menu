@@ -13,14 +13,14 @@ void UIItem::OnClick()
 		m_fn((void*)this);
 }
 
-void UIItem::SetParent(UIMenu* parent) 
-{ 
-	m_parent = parent; 
+void UIItem::SetParent(UIMenu* parent)
+{
+	m_parent = parent;
 }
 
-UIMenu* UIItem::GetParent() 
+UIMenu* UIItem::GetParent()
 {
-	return m_parent; 
+	return m_parent;
 }
 
 UIItem::~UIItem()
@@ -43,7 +43,7 @@ UIItemToggle::~UIItemToggle()
 {
 }
 
-UIItemSubMenu::UIItemSubMenu(std::string title, std::string description, Client* client, MenuCallback createMenu) : UIItem(title, description, [](void*){})
+UIItemSubMenu::UIItemSubMenu(std::string title, std::string description, Client* client, MenuCallback createMenu) : UIItem(title, description, [](void*) {})
 {
 	m_client = client;
 	m_createMenu = createMenu;
@@ -51,7 +51,7 @@ UIItemSubMenu::UIItemSubMenu(std::string title, std::string description, Client*
 
 void UIItemSubMenu::OnClick()
 {
-	if(m_client && m_createMenu)
+	if (m_client && m_createMenu)
 	{
 		auto menu = m_createMenu();
 		menu->SetParent(m_parent);
@@ -61,7 +61,6 @@ void UIItemSubMenu::OnClick()
 
 UIItemSubMenu::~UIItemSubMenu()
 {
-
 }
 
 UIItemSuperSelect::UIItemSuperSelect(std::string title, std::string description) : UIItem(title, description, [](void*) {})
@@ -73,7 +72,7 @@ void UIItemSuperSelect::OnClick()
 	m_selected = !m_selected;
 	for each (auto i in m_parent->GetContainer().GetItems())
 	{
-		if (UIItemToggle* toggleItem = dynamic_cast< UIItemToggle* >(i))
+		if (UIItemToggle* toggleItem = dynamic_cast<UIItemToggle*>(i))
 		{
 			*(toggleItem->GetToggle()) = m_selected;
 		}
@@ -81,9 +80,7 @@ void UIItemSuperSelect::OnClick()
 }
 UIItemSuperSelect::~UIItemSuperSelect()
 {
-
 }
-
 
 UIItemList::UIItemList(std::string title, std::string description, OptionCallback cb, std::vector<std::string> items, bool passByIndex) : UIItem(title, description, cb)
 {
@@ -115,5 +112,4 @@ void UIItemList::OnLeftScroll()
 
 UIItemList::~UIItemList()
 {
-
 }

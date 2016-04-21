@@ -20,6 +20,7 @@ void ScriptMain()
 		if (client.CurrentMenu)
 			client.CurrentMenu->Draw();
 		client.RunThreads();
+		client.CheckModel();
 		WAIT(0);
 	}
 }

@@ -28,12 +28,15 @@ public:
 	void ProcessInput();
 	void InitializeMenu();
 	void ToggleMenu();
-
+	void GoToPreviousMenu();
 	void ScrollDown();
 	void ScrollUp();
+
 	void SetMenu(UIMenu* menu);
 	uint32_t GetCurrentItemIndex();
 	void AddObject(Object obj) { SpawnedObjects.push_back(obj); }
+	UIMenu* SpawnMenu(std::string name, std::string description = "");
+	void CheckModel();
 	~Client();
 
 	UIMenu* CurrentMenu;
@@ -52,6 +55,10 @@ public:
 	bool NeverWanted;
 	bool InvisablePlayer;
 	bool Flymode;
+	bool DriveWater;
+	bool DriveAir;
+	Object WaterObject;
+	Object AirObject;
 	std::map<bool*, ScriptThread*> Threads;
 	std::vector<Object> SpawnedObjects;
 };

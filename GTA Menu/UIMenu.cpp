@@ -60,7 +60,6 @@ void UIMenu::ScrollUp()
 		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (m_ItemSize * (14 + 1))));
 	else
 		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (m_ItemSize * (dist + 1))));
-
 }
 
 void UIMenu::ScrollRight()
@@ -76,7 +75,7 @@ void UIMenu::Add(UIItem* elem)
 {
 	elem->SetParent(this);
 	m_container.AddItem(elem);
-	m_currentItem = m_container.GetItems().begin();//stupid hack 
+	m_currentItem = m_container.GetItems().begin();//stupid hack
 }
 
 void UIMenu::Search(std::string filter)
@@ -88,7 +87,7 @@ UIMenu::~UIMenu()
 {
 	for each(auto i in m_container.GetItems())
 	{
-		if(i)
+		if (i)
 			delete i;
 	}
 }
