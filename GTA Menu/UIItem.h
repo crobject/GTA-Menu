@@ -4,6 +4,7 @@
 #include "Client.h"
 #include "Config.h"
 #include <list>
+#include "inc\natives.h"
 
 class UIMenu;
 typedef std::function<UIMenu*(void)> MenuCallback;
@@ -18,6 +19,7 @@ public:
 	virtual void OnRightScroll() {}
 	virtual void OnLeftScroll() {}
 	void SetParent(UIMenu* parent);
+	std::string& GetDescription() { return m_description; }
 	UIMenu* GetParent();
 	~UIItem();
 protected:
@@ -31,11 +33,13 @@ class UIItemToggle : public UIItem
 public:
 	UIItemToggle(std::string title, std::string description, OptionCallback fn, bool* toggle);
 	void OnClick();
-	std::string GetText() { return Text + (std::string)(*m_toggle ? "[On]" : "[Off]"); };
+	//std::string GetText() { return Text + (std::string)(*m_toggle ? "[On]" : "[Off]"); };
 	bool* GetToggle() { return m_toggle; }
+	void UIItemToggle::Draw();
 	~UIItemToggle();
 private:
 	bool* m_toggle;
+	UISprite m_sprite;
 };
 
 class UIItemSubMenu : public UIItem
@@ -73,4 +77,41 @@ private:
 	std::vector<std::string> m_list;
 	std::vector<std::string>::iterator m_currentItem;
 	bool m_callByIndex;
+};
+
+#include "UIMenu.h"
+template <class T>
+class UIItemAdditionalInformation : public UIItemSubMenu
+{
+public:
+	UIItemAdditionalInformation(std::string title, std::string description, Client* client, MenuCallback createMenu, T item) : UIItemSubMenu(title,description, client, createMenu), m_item(item)
+	{}
+	virtual void Draw()
+	{
+		auto pnt = m_parent->GetContainer().GetPosition();
+		pnt.m_x += (m_parent->GetContainer().GetSize().m_height / 2) + 30;
+		m_infoContainer = UIRectangle(pnt, Size_t(200, 200), Color_t(0, 0, 0, 120));
+		UIItemSubMenu::Draw();
+	}
+protected:
+	T m_item;
+	UIRectangle m_infoContainer;
+};
+
+class UIItemDisplayObjectMenu : public UIItemAdditionalInformation<Object>
+{
+public:
+	UIItemDisplayObjectMenu(std::string title, std::string description, Client* client, MenuCallback createMenu, Object item) :
+		UIItemAdditionalInformation<Object>(title, description, client, createMenu, item)
+	{}
+	void Draw();
+};
+
+class UIItemDisplayPlayerMenu : public UIItemAdditionalInformation<Ped>
+{
+public:
+	UIItemDisplayPlayerMenu(std::string title, std::string description, Client* client, MenuCallback createMenu, Ped item) :
+		UIItemAdditionalInformation<Ped>(title, description, client, createMenu, item)
+	{}
+	void Draw();
 };

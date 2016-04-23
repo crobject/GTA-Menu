@@ -56,7 +56,7 @@ void Client::ProcessInput()
 		if(CurrentMenu)
 			GoToPreviousMenu();
 	}
-	if (IsKeyJustUp(VK_CONTROL) && IsKeyJustUp('F') && CurrentMenu)
+	if (IsKeyDown(VK_CONTROL) && IsKeyDown('F') && CurrentMenu && !Keyboard)
 	{
 		Keyboard = true;
 		GAMEPLAY::DISPLAY_ONSCREEN_KEYBOARD(1, "FMMC_MPM_NA", "", "", "", "", "", 30);
@@ -93,7 +93,8 @@ void Client::GoToPreviousMenu()
 
 UIMenu* Client::SpawnMenu(std::string name, std::string description)
 {
-	return new UIMenu(UIText(name, Point(100, 75), DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false), UIText(description, Point(110, 100), DEFAULT_TITLE_SCALE - 0.75), Point(100, 75), Size_t(200, 500), [] {}, [] {});	
+	return new UIMenu(UIText(name, Point(100, 75), DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
+		UIText(description, Point(100, 75 + 40), DEFAULT_TITLE_SCALE - 0.5), Point(100, 75), Size_t(200, 500), [] {}, [] {});	
 }
 
 void Client::CheckModel()
@@ -220,7 +221,7 @@ void Client::InitializeMenu()
 			else
 				PLAYER::_SET_MOVE_SPEED_MULTIPLIER(PLAYER::PLAYER_ID(), 1.00);
 		}, &SuperRun));
-		self_menu->Add(new UIItemToggle("Super Jump", "Toggle Super Grip", [this](void* param)->void
+		self_menu->Add(new UIItemToggle("Super Jump", "", [this](void* param)->void
 		{
 			if (!Threads.count(&SuperJump))
 				Threads[&SuperJump] = new ScriptThread([](ScriptThread* thread)
@@ -228,7 +229,7 @@ void Client::InitializeMenu()
 				GAMEPLAY::SET_SUPER_JUMP_THIS_FRAME(PLAYER::PLAYER_ID());
 			});
 		}, &SuperJump));
-		self_menu->Add(new UIItemToggle("Super Punch", "Toggle Super Grip", [this](void* param)->void
+		self_menu->Add(new UIItemToggle("Super Punch", "", [this](void* param)->void
 		{
 			if (!Threads.count(&SuperPunch))
 				Threads[&SuperPunch] = new ScriptThread([](ScriptThread* thread)
@@ -236,6 +237,33 @@ void Client::InitializeMenu()
 				GAMEPLAY::SET_EXPLOSIVE_MELEE_THIS_FRAME(PLAYER::PLAYER_ID());
 			});
 		}, &SuperPunch));
+		self_menu->Add(new UIItemToggle("Drop Money", "make it rain", [this](void* param)->void
+		{
+			if (!Threads.count(&MoneyDrop))
+				Threads[&MoneyDrop] = new ScriptThread([](ScriptThread* thread)
+			{
+				if (GAMEPLAY::GET_GAME_TIMER() % 20 != 0)
+					return;
+					for (Player i = 0; i < 32; i++)
+					{
+						auto ped = PLAYER::GET_PLAYER_PED(i);
+						if (ENTITY::DOES_ENTITY_EXIST(ped) && ped)
+						{
+							STREAMING::REQUEST_MODEL(0x113FD533);
+
+							auto pp = ENTITY::GET_ENTITY_COORDS(ped, 0);
+							if (STREAMING::HAS_MODEL_LOADED(0x113FD533))
+							{
+								static Any PICKUP_MONEY_CASE = GAMEPLAY::GET_HASH_KEY("PICKUP_MONEY_CASE");
+								OBJECT::CREATE_AMBIENT_PICKUP(PICKUP_MONEY_CASE, pp.x, pp.y, pp.z + 1,0, 40000, 0x113FD533, FALSE, TRUE);
+								STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(0x113FD533);
+							}
+
+						}
+					}
+			
+			});
+		}, &MoneyDrop));
 		return self_menu;
 	}));
 #pragma endregion
@@ -569,23 +597,25 @@ void Client::InitializeMenu()
 		auto player_menu = SpawnMenu("Player Menu");
 		for (uint32_t i = 0; i < 32; i++)
 		{
-			player_menu->Add(new UIItemSubMenu(PLAYER::GET_PLAYER_NAME(i), "Options that effect this player", this, [this]()->UIMenu*
+			const auto ped = PLAYER::GET_PLAYER_PED(i);
+			player_menu->Add(new UIItemDisplayPlayerMenu(PLAYER::GET_PLAYER_NAME(i), "Options that effect this player", this, [this, ped]()->UIMenu*
 			{
-				auto currentPlayer = CurrentMenu->GetCurrentItem();
 				Point title_point = Point(100, 75);
 				Point sub_title_point = Point(110, 100);
-				auto selected_player_menu = new UIMenuStorage<Ped>(UIText(((*currentPlayer))->GetText(), title_point, DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
-					UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {}, PLAYER::GET_PLAYER_PED(std::distance(currentPlayer, CurrentMenu->GetContainer().GetItems().begin())));
+				auto selected_player_menu = new UIMenuStorage<Ped>(UIText(((*CurrentMenu->GetCurrentItem()))->GetText(), title_point, DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
+					UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {}, ped);
 				selected_player_menu->Add(new UIItem("Kill Player", "", [](void* param) {
-					auto player = ((UIMenuStorage<Ped>*)param);
+					auto parent = ((UIItem*)(param))->GetParent();
+					UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
 					PED::EXPLODE_PED_HEAD(player->GetItem(), GAMEPLAY::GET_HASH_KEY("WEAPON_SNIPERRIFLE"));
 				}));
 				selected_player_menu->Add(new UIItem("Fling Player", "", [](void* param) {
-					auto player = ((UIMenuStorage<Ped>*)param);
+					auto parent = ((UIItem*)(param))->GetParent();
+					UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
 					ENTITY::APPLY_FORCE_TO_ENTITY(player->GetItem(), 1, GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), 0, 0, 0, true, true, true, true, false, false);
 				}));
 				return selected_player_menu;
-			}));
+			}, ped));
 		}
 		return player_menu;
 	}));
@@ -611,7 +641,7 @@ void Client::InitializeMenu()
 			auto menu2 = SpawnMenu("Object Spawner");
 			for each (auto i in SpawnedObjects)
 			{
-				menu2->Add(new UIItemSubMenu((std::string)"Object " + std::to_string(i), "", this, [this, i]()->UIMenu* {
+				menu2->Add(new UIItemDisplayObjectMenu(std::string("Object ") + GetEntityModel(i), "", this, [this, i]()->UIMenu* {
 					Point title_point = Point(100, 75);
 					Point sub_title_point = Point(110, 100);
 					auto selected_obj = i;
@@ -619,15 +649,18 @@ void Client::InitializeMenu()
 						UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {}, selected_obj);
 					current_obj->Add(new UIItem("Delete Object", "", [this](void* param)
 					{
-						UIMenuStorage<Object>* menu = (UIMenuStorage<Object>*)param;
+						auto parent = ((UIItem*)(param))->GetParent();
+						UIMenuStorage<Object>* menu = (UIMenuStorage<Object>*)parent;
 						auto obj = menu->GetItem();
 						auto it = std::find(SpawnedObjects.begin(), SpawnedObjects.end(), obj);
 						if (it != SpawnedObjects.end())
+						{
 							SpawnedObjects.erase(it);
-						OBJECT::DELETE_OBJECT(&obj);
+							OBJECT::DELETE_OBJECT(&obj);
+						}						
 					}));
 					return current_obj;
-				}));
+				}, i));
 			}
 			return menu2;
 		}));

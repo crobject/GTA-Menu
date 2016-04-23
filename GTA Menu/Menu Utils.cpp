@@ -76,3 +76,21 @@ void SetModel(std::string modelName)
 		STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(hash);
 	}
 }
+std::string GetEntityModel(Entity ent)
+{
+	for (uint32_t i = 0; i < ARRAYSIZE(propNames); i++)
+	{
+		if (GAMEPLAY::GET_HASH_KEY((char*)propNames[i].c_str()) == ENTITY::GET_ENTITY_MODEL(ent))
+			return pedModels[i];
+	}
+	
+}
+std::string GetVehicleModel(Vehicle veh)
+{
+	for each(auto i in vehicleModels)
+	{
+		auto hash = GAMEPLAY::GET_HASH_KEY((char*)i.c_str());
+		if (VEHICLE::IS_VEHICLE_MODEL(veh, hash))
+			return VEHICLE::GET_DISPLAY_NAME_FROM_VEHICLE_MODEL(hash);
+	}
+}

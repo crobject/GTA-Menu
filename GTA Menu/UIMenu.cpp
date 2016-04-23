@@ -10,9 +10,9 @@ UIMenu::UIMenu()
 UIMenu::UIMenu(const UIText& title, const UIText& caption, Point position, Size_t size, std::function<void()> onOpen, std::function<void()> onClose)
 {
 	m_pageNum = 0;
-	m_container = UIContainer(position, size, Color_t(0, 0, 0, 120));
+	m_container = UIContainer(position, size, Color_t(0, 0, 0, 155));
 	auto p = position;
-	p.m_y += 40;
+	p.m_y += m_container.GetLogo().GetSize().m_height + m_container.GetDescriptionBar().GetSize().m_height;
 	m_scrollbar = UIRectangle(p, Size_t(size.m_width, 30), Color_t(255, 255, 255, 255));
 	m_title = title;
 	m_caption = caption;
@@ -43,23 +43,26 @@ void UIMenu::ScrollDown()
 	else
 		m_currentItem = m_container.GetItems().begin();
 	auto dist = std::distance(m_container.GetItems().begin(), m_currentItem);
+	auto sizeOffset = m_container.GetLogo().GetSize().m_height + m_container.GetDescriptionBar().GetSize().m_height;
 	if (dist > 14)
-		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (m_ItemSize * (14 + 1))));
+		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + sizeOffset + (m_ItemSize * (14))));
 	else
-		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (m_ItemSize * (dist + 1))));
+		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + sizeOffset +  (m_ItemSize * (dist))));
 }
 
 void UIMenu::ScrollUp()
 {
+	auto sizeOffset = m_container.GetLogo().GetSize().m_height + m_container.GetDescriptionBar().GetSize().m_height;
+
 	if (m_currentItem != m_container.GetItems().begin())
 		m_currentItem--;
 	else
 		m_currentItem = m_container.GetItems().end() - 1;
 	auto dist = std::distance(m_container.GetItems().begin(), m_currentItem);
 	if (dist > 14)
-		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (m_ItemSize * (14 + 1))));
+		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + sizeOffset + (m_ItemSize * (14 ))));
 	else
-		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + 10 + (m_ItemSize * (dist + 1))));
+		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + sizeOffset + (m_ItemSize * (dist ))));
 }
 
 void UIMenu::ScrollRight()

@@ -222,53 +222,46 @@ public:
 	void Draw(Size_t offset);
 };
 
-class UIContainer : public UIRectangle
-{
-public:
-	UIContainer();
-	UIContainer(Point position, Size_t size);
-	UIContainer(Point position, Size_t size, Color_t color, uint32_t pageSize = 15);
-	void AddItem(UIItem* elem);
-	virtual void Draw(const std::vector<UIItem*>::iterator& currentItem, std::string filter = "");
-	std::vector<UIItem*>& GetItems() { return Items; }
-protected:
-	std::vector<UIItem*> Items;
-	uint32_t m_pageSize;
-};
-
-class UIPagedContainer : public UIContainer
-{
-public:
-	UIPagedContainer();
-	UIPagedContainer(Point position, Size_t size);
-	UIPagedContainer(Point position, Size_t size, Color_t color, uint32_t pageSize = 15);
-	void Draw(uint32_t page);
-	void Draw(Size_t offset);
-	uint32_t GetPageCount() { return Items.size() / m_pageSize; }
-	uint32_t GetPageSize() { return m_pageSize; }
-private:
-	uint32_t m_pageSize;
-};
-
 class UISprite : public UIElement
 {
 public:
+	UISprite::UISprite();
 	UISprite(std::string textureDict, std::string textureName, Size_t scale, Point position);
 	UISprite(std::string textureDict, std::string textureName, Size_t scale, Point position, Color_t color);
 	UISprite(std::string textureDict, std::string textureName, Size_t scale, Point position, Color_t color, float rotation);
 
 	~UISprite();
-	void SetScale(Size_t val) { Scale = val; }
-	Size_t GetScale() { return Scale; }
+
 	void SetRotation(float val) { Rotation = val; }
 	float GetRotation() { return Rotation; }
 	void Draw();
 	void Draw(Size_t offset);
-
+	
+	std::string GetTextureName() { return _textureName; }
+	void SetTextureName(std::string val);
 protected:
-	Size_t Scale;
 	float Rotation;
 
 	std::string _textureDict;
 	std::string _textureName;
+};
+
+class UIContainer : public UISprite
+{
+public:
+	UIContainer();
+	UIContainer(Point position, Size_t size);
+	UIContainer(Point position, Size_t size, Color_t color, std::string spriteDict = "commonmenu", std::string spriteName = "interaction_bgd", uint32_t pageSize = 15);
+	void AddItem(UIItem* elem);
+	virtual void Draw(const std::vector<UIItem*>::iterator& currentItem, std::string filter = "");
+	std::vector<UIItem*>& GetItems() { return Items; }
+	UISprite& GetLogo() { return m_logo; }
+	UISprite& GetDescriptionBar() { return m_descrptionBar; }
+	UISprite& GetItemDescriptionBar() { return m_itemDescrptionBar; }
+protected:
+	std::vector<UIItem*> Items;
+	uint32_t m_pageSize;
+	UISprite m_logo;
+	UISprite m_descrptionBar;
+	UISprite m_itemDescrptionBar;
 };

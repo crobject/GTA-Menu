@@ -57,6 +57,7 @@ public:
 	bool Flymode;
 	bool DriveWater;
 	bool DriveAir;
+	bool MoneyDrop;
 	Object WaterObject;
 	Object AirObject;
 	std::map<bool*, ScriptThread*> Threads;

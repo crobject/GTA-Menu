@@ -189,24 +189,42 @@ void UIRectangle::Draw(Size_t offset)
 	GRAPHICS::DRAW_RECT(x, y, w, h, Color.r, Color.g, Color.b, Color.a);
 }
 
-UIContainer::UIContainer() : UIRectangle()
+UIContainer::UIContainer()
 {
 }
-UIContainer::UIContainer(Point position, Size_t size) : UIRectangle(position, size)
+UIContainer::UIContainer(Point position, Size_t size)
 {
 }
-UIContainer::UIContainer(Point position, Size_t size, Color_t color, uint32_t pageSize) : UIRectangle(position, size, color), m_pageSize(pageSize)
+UIContainer::UIContainer(Point position, Size_t size, Color_t color, std::string spriteDict, std::string spriteName, uint32_t pageSize) : UISprite("commonmenu", "gradient_bgd", size, position, color), 
+	m_pageSize(pageSize)
 {
+	auto s = size;
+	s.m_height = 80;	
+	m_logo = UISprite(spriteDict, spriteName, s, position, Color_t(255,255,255,255));
+	auto p = position;
+	p.m_y += s.m_height;
+	m_descrptionBar = UISprite("commonmenu", "gradient_nav", Size_t(size.m_width, 30), p, Color_t(0,0,0,255));
+	p.m_y += m_descrptionBar.GetSize().m_height + Size.m_height + 10;
+	m_itemDescrptionBar = UISprite("commonmenu", "gradient_nav", Size_t(size.m_width, 30), p, Color_t(0, 0, 0, 255));
 }
+
 
 void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::string filter)
 {
-	std::locale loc;
 	if (!Enabled)
 	{
 		return;
 	}
-	UIRectangle::Draw(Size_t());
+	m_logo.Draw();
+	m_descrptionBar.Draw();
+	m_itemDescrptionBar.Draw();
+	UIText((*currentItem)->GetDescription(), m_itemDescrptionBar.GetPosition(), DEFAULT_FONT_SCALE, Color_t(255,255,255,255)).Draw();
+	auto sizeOffset = m_logo.GetSize().m_height + m_descrptionBar.GetSize().m_height;
+	Size.m_height = (min(15, Items.size()) * 30) + sizeOffset;
+	m_itemDescrptionBar.SetPosition(Point(Position.m_x, sizeOffset + Size.m_height + 10));
+	UISprite::Draw(Size_t());
+	if (!Items.size())
+		return;
 	auto dist = std::distance(Items.begin(), currentItem);
 	if (dist > m_pageSize - 1)
 	{
@@ -216,7 +234,7 @@ void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::s
 		auto pageEnd = min(m_pageSize, std::distance(begin, Items.end()));
 		while (i != Items.end() && i < begin + pageEnd)
 		{
-			auto pos = Point(Position.m_x, Position.m_y + 40 + (screenindex * 30));
+			auto pos = Point(Position.m_x, Position.m_y + sizeOffset + (screenindex * 30));
 			//TODO: pass a value for the difference
 			(*i)->SetPosition(pos);
 			(*i)->Draw();
@@ -238,7 +256,7 @@ void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::s
 				i++;
 				continue;
 			}
-			auto pos = Point(Position.m_x, Position.m_y + 40 + (screenindex * 30));
+			auto pos = Point(Position.m_x, Position.m_y + sizeOffset + (screenindex * 30));
 			(*i)->SetPosition(pos);
 			(*i)->Draw();
 			screenindex++;
@@ -250,47 +268,13 @@ void UIContainer::AddItem(UIItem* elem)
 {
 	Items.push_back(elem);
 }
-
-UIPagedContainer::UIPagedContainer() : UIContainer()
-{
-}
-
-UIPagedContainer::UIPagedContainer(Point position, Size_t size)
-{
-}
-
-UIPagedContainer::UIPagedContainer(Point position, Size_t size, Color_t color, uint32_t pageSize) : UIContainer(position, size, color), m_pageSize(pageSize)
-{
-}
-
-void UIPagedContainer::Draw(uint32_t page)
-{
-	UIContainer::UIRectangle::Draw();
-
-	if (page * m_pageSize > Items.size())
-	{
-		return;
-	}
-
-	auto begin = Items.begin() + (page * m_pageSize);
-	auto i = begin;
-	auto pageEnd = min(m_pageSize, std::distance(begin, Items.end()));
-	while (i != Items.end() && i < begin + pageEnd && *i)
-	{
-		(*i)->Draw();
-		i++;
-	}
-}
-
-void UIPagedContainer::Draw(Size_t offset)
-{
-}
+UISprite::UISprite() {}
 UISprite::UISprite(std::string textureDict, std::string textureName, Size_t scale, Point position)
 {
 	Enabled = true;
 	_textureDict = textureDict;
 	_textureName = textureName;
-	Scale = scale;
+	Size = scale;
 	Position = position;
 	Color = Color_t(0, 0, 0, 0);
 	Rotation = 0.0F;
@@ -301,7 +285,7 @@ UISprite::UISprite(std::string textureDict, std::string textureName, Size_t scal
 	Enabled = true;
 	_textureDict = textureDict;
 	_textureName = textureName;
-	Scale = scale;
+	Size = scale;
 	Position = position;
 	Color = color;
 	Rotation = 0.0F;
@@ -312,7 +296,7 @@ UISprite::UISprite(std::string textureDict, std::string textureName, Size_t scal
 	Enabled = true;
 	_textureDict = textureDict;
 	_textureName = textureName;
-	Scale = scale;
+	Size = scale;
 	Position = position;
 	Color = color;
 	Rotation = rotation;
@@ -320,9 +304,13 @@ UISprite::UISprite(std::string textureDict, std::string textureName, Size_t scal
 }
 UISprite::~UISprite()
 {
-	GRAPHICS::SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED((char*)_textureDict.c_str());
+	//GRAPHICS::SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED((char*)_textureDict.c_str());
 }
-
+void UISprite::SetTextureName(std::string val)
+{
+	_textureName = val;
+	GRAPHICS::REQUEST_STREAMED_TEXTURE_DICT((char*)_textureDict.c_str(), FALSE);
+}
 void UISprite::Draw()
 {
 	Draw(Size_t());
@@ -334,8 +322,8 @@ void UISprite::Draw(Size_t offset)
 		return;
 	}
 
-	const float scaleX = static_cast<float>(Scale.m_width) / GTAUI::WIDTH;
-	const float scaleY = static_cast<float>(Scale.m_height) / GTAUI::HEIGHT;
+	const float scaleX = static_cast<float>(Size.m_width) / GTAUI::WIDTH;
+	const float scaleY = static_cast<float>(Size.m_height) / GTAUI::HEIGHT;
 	const float positionX = ((static_cast<float>(Position.m_x) + offset.m_width) / GTAUI::WIDTH) + scaleX * 0.5f;
 	const float positionY = ((static_cast<float>(Position.m_y) + offset.m_height) / GTAUI::HEIGHT) + scaleY * 0.5f;
 
