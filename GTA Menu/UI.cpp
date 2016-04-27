@@ -208,6 +208,25 @@ UIContainer::UIContainer(Point position, Size_t size, Color_t color, std::string
 	m_itemDescrptionBar = UISprite("commonmenu", "gradient_nav", Size_t(size.m_width, 30), p, Color_t(0, 0, 0, 255));
 }
 
+std::vector<UIItem*>& UIContainer::GetItems()
+{
+	if (!m_filter.empty())
+	{
+		auto newitems = std::vector<UIItem*>();
+		auto i = m_items.begin();
+		while (i != m_items.end())
+		{
+			
+			if((*i)->GetText().find(m_filter) != std::string::npos)
+			{
+				newitems.push_back(*i);
+			}			
+			i++;
+		}
+		return newitems;
+	}
+	return m_items; 
+}
 
 void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::string filter)
 {
@@ -220,19 +239,19 @@ void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::s
 	m_itemDescrptionBar.Draw();
 	UIText((*currentItem)->GetDescription(), m_itemDescrptionBar.GetPosition(), DEFAULT_FONT_SCALE, Color_t(255,255,255,255)).Draw();
 	auto sizeOffset = m_logo.GetSize().m_height + m_descrptionBar.GetSize().m_height;
-	Size.m_height = (min(15, Items.size()) * 30) + sizeOffset;
+	Size.m_height = (min(15, GetItems().size()) * 30) + sizeOffset;
 	m_itemDescrptionBar.SetPosition(Point(Position.m_x, sizeOffset + Size.m_height + 10));
 	UISprite::Draw(Size_t());
-	if (!Items.size())
+	if (!GetItems().size())
 		return;
-	auto dist = std::distance(Items.begin(), currentItem);
+	auto dist = std::distance(GetItems().begin(), currentItem);
 	if (dist > m_pageSize - 1)
 	{
-		auto begin = Items.begin() + (dist - m_pageSize) + 1;
+		auto begin = GetItems().begin() + (dist - m_pageSize) + 1;
 		auto i = begin;
 		uint32_t screenindex = 0;
-		auto pageEnd = min(m_pageSize, std::distance(begin, Items.end()));
-		while (i != Items.end() && i < begin + pageEnd)
+		auto pageEnd = min(m_pageSize, std::distance(begin, GetItems().end()));
+		while (i != GetItems().end() && i < begin + pageEnd)
 		{
 			auto pos = Point(Position.m_x, Position.m_y + sizeOffset + (screenindex * 30));
 			//TODO: pass a value for the difference
@@ -245,17 +264,11 @@ void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::s
 	else
 	{
 		uint32_t screenindex = 0;
-		auto begin = Items.begin();
+		auto begin = GetItems().begin();
 		auto i = begin;
-		auto pageEnd = min(m_pageSize, std::distance(begin, Items.end()));
-		while (i != Items.end() && i < begin + pageEnd)
-		{
-			auto item_name = std::regex(filter);
-			if (filter != "" && !std::regex_match((*i)->GetText(), item_name))
-			{
-				i++;
-				continue;
-			}
+		auto pageEnd = min(m_pageSize, std::distance(begin, GetItems().end()));
+		while (i != GetItems().end() && i < begin + pageEnd)
+		{			
 			auto pos = Point(Position.m_x, Position.m_y + sizeOffset + (screenindex * 30));
 			(*i)->SetPosition(pos);
 			(*i)->Draw();
@@ -266,7 +279,7 @@ void UIContainer::Draw(const std::vector<UIItem*>::iterator& currentItem, std::s
 }
 void UIContainer::AddItem(UIItem* elem)
 {
-	Items.push_back(elem);
+	m_items.push_back(elem);
 }
 UISprite::UISprite() {}
 UISprite::UISprite(std::string textureDict, std::string textureName, Size_t scale, Point position)

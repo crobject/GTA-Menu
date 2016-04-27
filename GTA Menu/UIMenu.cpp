@@ -9,7 +9,7 @@ UIMenu::UIMenu()
 
 UIMenu::UIMenu(const UIText& title, const UIText& caption, Point position, Size_t size, std::function<void()> onOpen, std::function<void()> onClose)
 {
-	m_pageNum = 0;
+	m_currentIndex = 0;
 	m_container = UIContainer(position, size, Color_t(0, 0, 0, 155));
 	auto p = position;
 	p.m_y += m_container.GetLogo().GetSize().m_height + m_container.GetDescriptionBar().GetSize().m_height;
@@ -20,29 +20,33 @@ UIMenu::UIMenu(const UIText& title, const UIText& caption, Point position, Size_
 	m_size = size;
 	m_onOpen = onOpen;
 	m_onClose = onClose;
+	//remove previous filter
+	Search("");
 }
 
 void UIMenu::Draw()
 {
+	if (m_currentIndex > m_container.GetItems().size())
+		m_currentIndex = 0;
 	m_scrollbar.Draw();
 	m_title.Draw();
 	m_caption.Draw();
-	m_container.Draw(m_currentItem, m_filter);
+	m_container.Draw(GetCurrentItem(), m_filter);
 }
 
 void UIMenu::Call()
 {
-	if (*m_currentItem)
-		(*m_currentItem)->OnClick();
+	if (*GetCurrentItem())
+		(*GetCurrentItem())->OnClick();
 }
 
 void UIMenu::ScrollDown()
 {
-	if (m_currentItem != m_container.GetItems().end() - 1)
-		m_currentItem++;
+	if (GetCurrentItem() != m_container.GetItems().end() - 1)
+		m_currentIndex++;
 	else
-		m_currentItem = m_container.GetItems().begin();
-	auto dist = std::distance(m_container.GetItems().begin(), m_currentItem);
+		m_currentIndex = 0;
+	auto dist = std::distance(m_container.GetItems().begin(), GetCurrentItem());
 	auto sizeOffset = m_container.GetLogo().GetSize().m_height + m_container.GetDescriptionBar().GetSize().m_height;
 	if (dist > 14)
 		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + sizeOffset + (m_ItemSize * (14))));
@@ -54,11 +58,11 @@ void UIMenu::ScrollUp()
 {
 	auto sizeOffset = m_container.GetLogo().GetSize().m_height + m_container.GetDescriptionBar().GetSize().m_height;
 
-	if (m_currentItem != m_container.GetItems().begin())
-		m_currentItem--;
+	if (GetCurrentItem() != m_container.GetItems().begin())
+		m_currentIndex--;
 	else
-		m_currentItem = m_container.GetItems().end() - 1;
-	auto dist = std::distance(m_container.GetItems().begin(), m_currentItem);
+		m_currentIndex = m_container.GetItems().size();
+	auto dist = std::distance(m_container.GetItems().begin(), GetCurrentItem());
 	if (dist > 14)
 		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + sizeOffset + (m_ItemSize * (14 ))));
 	else
@@ -67,23 +71,22 @@ void UIMenu::ScrollUp()
 
 void UIMenu::ScrollRight()
 {
-	(*m_currentItem)->OnRightScroll();
+	(*GetCurrentItem())->OnRightScroll();
 }
 
 void UIMenu::ScrollLeft()
 {
-	(*m_currentItem)->OnLeftScroll();
+	(*GetCurrentItem())->OnLeftScroll();
 }
 void UIMenu::Add(UIItem* elem)
 {
 	elem->SetParent(this);
-	m_container.AddItem(elem);
-	m_currentItem = m_container.GetItems().begin();//stupid hack
+	m_container.AddItem(elem);	
 }
 
 void UIMenu::Search(std::string filter)
 {
-	m_filter = filter;
+	m_container.SetFilter(filter);
 }
 
 UIMenu::~UIMenu()

@@ -107,11 +107,26 @@ public:
 	void Draw();
 };
 
-class UIItemDisplayPlayerMenu : public UIItemAdditionalInformation<Ped>
+class UIItemDisplayPlayerMenu : public UIItemAdditionalInformation<Player>
 {
 public:
-	UIItemDisplayPlayerMenu(std::string title, std::string description, Client* client, MenuCallback createMenu, Ped item) :
-		UIItemAdditionalInformation<Ped>(title, description, client, createMenu, item)
+	UIItemDisplayPlayerMenu(std::string title, std::string description, Client* client, MenuCallback createMenu, Player item) :
+		UIItemAdditionalInformation<Player>(title, description, client, createMenu, item)
 	{}
 	void Draw();
+};
+
+template <class T>
+class UINumberItem : public UIItem
+{
+public:
+	UINumberItem(std::string title, std::string description, OptionCallback cb, T item = 0, T step = 1) : UIItem(title, description, cb), m_item(item), m_step(step)
+	{}
+	std::string GetText() { return Text + (std::string)"<" + std::to_string(m_item) + (std::string)">"; }
+	void OnRightScroll() { m_item += m_step; }
+	void OnLeftScroll() { m_item -= m_step; }
+	T GetValue() { return m_item; }
+private:
+	T m_step;
+	T m_item;
 };

@@ -20,7 +20,7 @@ public:
 	void ScrollLeft();
 	void Add(UIItem* elem);
 	UIContainer& GetContainer() { return m_container; }
-	std::vector<UIItem*>::iterator GetCurrentItem() { return m_currentItem; }
+	std::vector<UIItem*>::iterator GetCurrentItem() { return m_container.GetItems().begin() + m_currentIndex; }
 	void SetParent(UIMenu* parent) { m_parent = parent; }
 	UIMenu* GetParent() { return m_parent; }
 	void Search(std::string filter);
@@ -32,7 +32,8 @@ protected:
 	UIRectangle m_scrollbar;
 	Point m_position;
 	Size_t m_size;
-	std::vector<UIItem*>::iterator m_currentItem;
+	//std::vector<UIItem*>::iterator m_currentItem;
+	uint32_t m_currentIndex;
 	std::function<void()> m_onOpen;
 	std::function<void()> m_onClose;
 	UIMenu* m_parent;

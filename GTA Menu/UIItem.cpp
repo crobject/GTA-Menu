@@ -134,7 +134,7 @@ void UIItemDisplayObjectMenu::Draw()
 	{
 		m_infoContainer.Draw();
 		auto pnt = m_parent->GetContainer().GetPosition();
-		pnt.m_x += (m_parent->GetContainer().GetSize().m_width / 2) + 30;
+		pnt.m_x += (m_parent->GetContainer().GetSize().m_width * 2) + 30;
 		pnt.m_y += 10;
 		auto pos = ENTITY::GET_ENTITY_COORDS(m_item, FALSE);
 		UIText(std::string("X: ") + std::to_string(static_cast<int>(pos.x)) + std::string(" Y: ") + std::to_string(static_cast<int>(pos.y)) + std::string(" Z : ") + std::to_string(static_cast<int>(pos.z)),
@@ -153,7 +153,7 @@ void UIItemDisplayPlayerMenu::Draw()
 	{
 		m_infoContainer.Draw();
 		auto pnt = m_parent->GetContainer().GetPosition();
-		pnt.m_x += (m_parent->GetContainer().GetSize().m_width / 2) + 30;
+		pnt.m_x += (m_parent->GetContainer().GetSize().m_width * 2) + 30;
 		pnt.m_y += 10;
 		auto pos = ENTITY::GET_ENTITY_COORDS(m_item, FALSE);
 		UIText(std::string("X: ") + std::to_string(static_cast<int>(pos.x)) + std::string(" Y: ") + std::to_string(static_cast<int>(pos.y)) + std::string(" Z : ") + std::to_string(static_cast<int>(pos.z)),

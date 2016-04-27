@@ -206,7 +206,15 @@ void Client::InitializeMenu()
 		}, &InvisablePlayer));
 		self_menu->Add(new UIItem("Clean Player", "", [this](void* param)
 		{
-			//TODO: this
+
+			ENTITY::SET_ENTITY_HEALTH(PLAYER::PLAYER_PED_ID(), ENTITY::GET_ENTITY_MAX_HEALTH(PLAYER::PLAYER_PED_ID()));
+			PED::ADD_ARMOUR_TO_PED(PLAYER::PLAYER_PED_ID(), PLAYER::GET_PLAYER_MAX_ARMOUR(PLAYER::PLAYER_ID()) - PED::GET_PED_ARMOUR(PLAYER::PLAYER_PED_ID()));
+			if (PED::IS_PED_IN_ANY_VEHICLE(PLAYER::PLAYER_PED_ID(), 0))
+			{
+				Vehicle playerVeh = PED::GET_VEHICLE_PED_IS_USING(PLAYER::PLAYER_PED_ID());
+				if (ENTITY::DOES_ENTITY_EXIST(PLAYER::PLAYER_PED_ID()) && !ENTITY::IS_ENTITY_DEAD(playerVeh))
+					VEHICLE::SET_VEHICLE_FIXED(PLAYER::PLAYER_PED_ID());
+			}
 		}));
 		self_menu->Add(new UIItem("Give All Weapons", "", [this](void* param)
 		{
@@ -237,6 +245,34 @@ void Client::InitializeMenu()
 				GAMEPLAY::SET_EXPLOSIVE_MELEE_THIS_FRAME(PLAYER::PLAYER_ID());
 			});
 		}, &SuperPunch));
+		self_menu->Add(new UINumberItem<uint32_t>("Wanted Level", "", [this](void* param) 
+		{
+			auto item = (UINumberItem<uint32_t>*)(param);
+			PLAYER::SET_PLAYER_WANTED_LEVEL_NO_DROP(PLAYER::PLAYER_ID(), item->GetValue(), FALSE);
+			PLAYER::SET_PLAYER_WANTED_LEVEL(PLAYER::PLAYER_ID(), item->GetValue(), FALSE);
+		}));
+		self_menu->Add(new UIItem("Teleport into closest vehicle", "", [](void* param)
+		{
+			const uint32_t numElements = 10;
+			const uint32_t arrSize = numElements * 2 + 2;  //Start at index 2, and the odd elements are padding
+			Vehicle vehs[arrSize];
+			//0 index is the size of the array
+			vehs[0] = numElements;
+			uint32_t count = PED::GET_PED_NEARBY_VEHICLES(PLAYER::PLAYER_PED_ID(), vehs);
+			uint32_t offsettedID = 2;
+			uint32_t seatIndex = -1;
+			while (seatIndex == -1)
+			{
+				for (uint32_t i = 0; i < 7; i++)
+				{
+					if (VEHICLE::IS_VEHICLE_SEAT_FREE(vehs[offsettedID], i))
+						seatIndex = i;
+				}
+				offsettedID += 2;
+			}
+			
+			PED::SET_PED_INTO_VEHICLE(PLAYER::PLAYER_PED_ID(), vehs[offsettedID], seatIndex);
+		}));
 		self_menu->Add(new UIItemToggle("Drop Money", "make it rain", [this](void* param)->void
 		{
 			if (!Threads.count(&MoneyDrop))
@@ -298,14 +334,14 @@ void Client::InitializeMenu()
 			auto handle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), FALSE);
 			if (handle)
 				for (int DoorIndex = 0; DoorIndex <= 6; DoorIndex++)
-					VEHICLE::SET_VEHICLE_DOOR_SHUT(handle, DoorIndex, FALSE);
+					VEHICLE::SET_VEHICLE_DOOR_OPEN(handle, DoorIndex, FALSE, FALSE);
 		}));
 		veh_menu->Add(new UIItem("Close Doors", "", [this](void* param)
 		{
 			auto handle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), FALSE);
 			if (handle)
 				for (int DoorIndex = 0; DoorIndex <= 6; DoorIndex++)
-					VEHICLE::SET_VEHICLE_DOOR_OPEN(handle, DoorIndex, FALSE, FALSE);
+					VEHICLE::SET_VEHICLE_DOOR_SHUT(handle, DoorIndex, FALSE);
 		}));
 		veh_menu->Add(new UIItem("Bullet Proof Tires", "", [this](void* param)
 		{
@@ -408,6 +444,70 @@ void Client::InitializeMenu()
 				OBJECT::DELETE_OBJECT(&AirObject);
 			}
 		}, &DriveAir));
+		veh_menu->Add(new UIItemList("Vehicle Weapons", "", [this](void* param)
+		{
+			uint32_t index = (uint32_t)param;
+			VehicleWeapon = (bool)index;
+			switch (index)
+			{
+			case 1:
+				vehicleWeaponHash = GAMEPLAY::GET_HASH_KEY("WEAPON_VEHICLE_ROCKET");
+				break;
+			case 2:
+				vehicleWeaponHash = GAMEPLAY::GET_HASH_KEY("WEAPON_PISTOL");
+				break;
+			case 3:
+				vehicleWeaponHash = GAMEPLAY::GET_HASH_KEY("WEAPON_STUNGUN");
+				break;
+			case 4:
+				vehicleWeaponHash = GAMEPLAY::GET_HASH_KEY("WEAPON_GRENADELAUNCHER");
+				break;
+			case 5:
+				vehicleWeaponHash = GAMEPLAY::GET_HASH_KEY("WEAPON_MOLOTOV");
+				break;
+			case 6:
+				vehicleWeaponHash = GAMEPLAY::GET_HASH_KEY("WEAPON_RPG");
+				break;				
+			case 7:
+				vehicleWeaponHash = GAMEPLAY::GET_HASH_KEY("WEAPON_FLARE");
+				break;
+			}
+			if (!Threads.count(&VehicleWeapon))
+				Threads[&VehicleWeapon] = new ScriptThread([this](ScriptThread* thread)
+			{
+				if (IsKeyDown(VK_INSERT) && PLAYER::IS_PLAYER_CONTROL_ON(PLAYER::PLAYER_ID()) && PED::IS_PED_IN_ANY_VEHICLE(PLAYER::PLAYER_PED_ID(), 0))
+				{
+					//ripped from the native trainer...
+					Vehicle veh = PED::GET_VEHICLE_PED_IS_USING(PLAYER::PLAYER_PED_ID());
+
+					Vector3 v0, v1;
+					GAMEPLAY::GET_MODEL_DIMENSIONS(ENTITY::GET_ENTITY_MODEL(veh), &v0, &v1);
+
+					Hash weaponAssetRocket = vehicleWeaponHash;
+					if (!WEAPON::HAS_WEAPON_ASSET_LOADED(weaponAssetRocket))
+					{
+						WEAPON::REQUEST_WEAPON_ASSET(weaponAssetRocket, 31, 0);
+						while (!WEAPON::HAS_WEAPON_ASSET_LOADED(weaponAssetRocket))
+							WAIT(0);
+					}
+
+					Vector3 coords0from = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(veh, -(v1.x + 0.25f), v1.y + 1.25f, 0.1);
+					Vector3 coords1from = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(veh, (v1.x + 0.25f), v1.y + 1.25f, 0.1);
+					Vector3 coords0to = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(veh, -v1.x, v1.y + 100.0f, 0.1f);
+					Vector3 coords1to = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(veh, v1.x, v1.y + 100.0f, 0.1f);
+
+					GAMEPLAY::SHOOT_SINGLE_BULLET_BETWEEN_COORDS(coords0from.x, coords0from.y, coords0from.z,
+						coords0to.x, coords0to.y, coords0to.z,
+						250, 1, weaponAssetRocket, PLAYER::PLAYER_PED_ID(), 1, 0, -1.0);
+					GAMEPLAY::SHOOT_SINGLE_BULLET_BETWEEN_COORDS(coords1from.x, coords1from.y, coords1from.z,
+						coords1to.x, coords1to.y, coords1to.z,
+						250, 1, weaponAssetRocket, PLAYER::PLAYER_PED_ID(), 1, 0, -1.0);
+
+				}
+			});
+
+		}, {"None", "Rockets", "Pistol", "Stun Gun", "Grenade Launcher", "Molotov", "RPG", "Flare"}));
+
 		veh_menu->Add(new UIItemSubMenu("Mod Shop", "Pimp your vehicles", this, [this]()->UIMenu*
 		{
 			auto menu2 = SpawnMenu("Mod Shop");
@@ -597,25 +697,56 @@ void Client::InitializeMenu()
 		auto player_menu = SpawnMenu("Player Menu");
 		for (uint32_t i = 0; i < 32; i++)
 		{
-			const auto ped = PLAYER::GET_PLAYER_PED(i);
-			player_menu->Add(new UIItemDisplayPlayerMenu(PLAYER::GET_PLAYER_NAME(i), "Options that effect this player", this, [this, ped]()->UIMenu*
+			player_menu->Add(new UIItemDisplayPlayerMenu(PLAYER::GET_PLAYER_NAME(i), "Options that effect this player", this, [this, i]()->UIMenu*
 			{
 				Point title_point = Point(100, 75);
 				Point sub_title_point = Point(110, 100);
-				auto selected_player_menu = new UIMenuStorage<Ped>(UIText(((*CurrentMenu->GetCurrentItem()))->GetText(), title_point, DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
-					UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {}, ped);
+				auto selected_player_menu = new UIMenuStorage<Player>(UIText(((*CurrentMenu->GetCurrentItem()))->GetText(), title_point, DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
+					UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {}, i);
 				selected_player_menu->Add(new UIItem("Kill Player", "", [](void* param) {
 					auto parent = ((UIItem*)(param))->GetParent();
 					UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
-					PED::EXPLODE_PED_HEAD(player->GetItem(), GAMEPLAY::GET_HASH_KEY("WEAPON_SNIPERRIFLE"));
+					PED::EXPLODE_PED_HEAD(PLAYER::GET_PLAYER_PED(player->GetItem()), GAMEPLAY::GET_HASH_KEY("WEAPON_SNIPERRIFLE"));
 				}));
 				selected_player_menu->Add(new UIItem("Fling Player", "", [](void* param) {
 					auto parent = ((UIItem*)(param))->GetParent();
 					UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
-					ENTITY::APPLY_FORCE_TO_ENTITY(player->GetItem(), 1, GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), 0, 0, 0, true, true, true, true, false, false);
+					ENTITY::APPLY_FORCE_TO_ENTITY(PLAYER::GET_PLAYER_PED(player->GetItem()), 1, GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), 0, 0, 0, true, true, true, true, false, false);
 				}));
+				selected_player_menu->Add(new UIItem("Teleport to Player", "", [](void* param) {
+					auto parent = ((UIItem*)(param))->GetParent();
+					UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
+					Teleport(PLAYER::PLAYER_PED_ID(), ENTITY::GET_ENTITY_COORDS(PLAYER::GET_PLAYER_PED(player->GetItem()), TRUE));
+				}));
+				selected_player_menu->Add(new UIItem("Give Stun Gun", "", [](void* param) {
+					auto parent = ((UIItem*)(param))->GetParent();
+					UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
+					WEAPON::GIVE_DELAYED_WEAPON_TO_PED(PLAYER::GET_PLAYER_PED(player->GetItem()), GAMEPLAY::GET_HASH_KEY("WEAPON_STUNGUN"), 300, FALSE);
+				}));
+				selected_player_menu->Add(new UIItem("Clone Player", "", [](void* param) {
+					auto parent = ((UIItem*)(param))->GetParent();
+					UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
+					PED::CLONE_PED(PLAYER::GET_PLAYER_PED(player->GetItem()), 1.0, TRUE, FALSE);
+				}));
+				selected_player_menu->Add(new UIItemDisplayPlayerMenu("Animation Options", "Set animations for the player", this, [this, i]()->UIMenu*
+				{
+					Point title_point = Point(100, 75);
+					Point sub_title_point = Point(110, 100);
+					auto anim_player_menu = new UIMenuStorage<Player>(UIText(((*CurrentMenu->GetCurrentItem()))->GetText(), title_point, DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
+						UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {}, i);
+					for each (auto i in animNames)
+					{
+						anim_player_menu->Add(new UIItem(std::get<0>(i), std::get<1>(i), [i](void* param)
+						{
+							auto parent = ((UIItem*)(param))->GetParent();
+							UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
+							SetAnim(PLAYER::GET_PLAYER_PED(player->GetItem()), std::get<0>(i), std::get<1>(i));
+						}));
+					}
+					return anim_player_menu;
+				}, i));
 				return selected_player_menu;
-			}, ped));
+			}, i));
 		}
 		return player_menu;
 	}));
@@ -659,6 +790,75 @@ void Client::InitializeMenu()
 							OBJECT::DELETE_OBJECT(&obj);
 						}						
 					}));
+					current_obj->Add(new UINumberItem<float>("Move X", "", [this](void* param)
+					{
+						auto item = (UINumberItem<float>*)(param);
+						auto parent = item->GetParent();
+						UIMenuStorage<Object>* menu = (UIMenuStorage<Object>*)parent;
+						auto obj = menu->GetItem();
+						auto pos = ENTITY::GET_ENTITY_COORDS(obj, TRUE);
+						pos.x += item->GetValue();
+						ENTITY::SET_ENTITY_COORDS_NO_OFFSET(obj, pos.x, pos.y, pos.z, TRUE, TRUE, TRUE);
+					}, 1.0, 0.5));
+					current_obj->Add(new UINumberItem<float>("Move Y", "", [this](void* param)
+					{
+						auto item = (UINumberItem<float>*)(param);
+						auto parent = item->GetParent();
+						UIMenuStorage<Object>* menu = (UIMenuStorage<Object>*)parent;
+						auto obj = menu->GetItem();
+						auto pos = ENTITY::GET_ENTITY_COORDS(obj, TRUE);
+						pos.y += item->GetValue();
+						ENTITY::SET_ENTITY_COORDS_NO_OFFSET(obj, pos.x, pos.y, pos.z, TRUE, TRUE, TRUE);
+					}, 1.0, 0.5));
+					current_obj->Add(new UINumberItem<float>("Move Z", "", [this](void* param)
+					{
+						auto item = (UINumberItem<float>*)(param);
+						auto parent = item->GetParent();
+						UIMenuStorage<Object>* menu = (UIMenuStorage<Object>*)parent;
+						auto obj = menu->GetItem();
+						auto pos = ENTITY::GET_ENTITY_COORDS(obj, TRUE);
+						pos.z += item->GetValue();
+						ENTITY::SET_ENTITY_COORDS_NO_OFFSET(obj, pos.x, pos.y, pos.z, TRUE, TRUE, TRUE);
+					}, 1.0, 0.5));
+					current_obj->Add(new UINumberItem<float>("Change Roll", "", [this](void* param)
+					{
+						auto item = (UINumberItem<float>*)(param);
+						auto parent = item->GetParent();
+						UIMenuStorage<Object>* menu = (UIMenuStorage<Object>*)parent;
+						auto obj = menu->GetItem();
+						auto pos = ENTITY::GET_ENTITY_COORDS(obj, TRUE);
+						pos.x += item->GetValue();
+						ENTITY::SET_ENTITY_ROTATION(obj, pos.x, pos.y, pos.z, TRUE, TRUE);
+					}, 15.0, 15.0));
+					current_obj->Add(new UINumberItem<float>("Change Pitch", "", [this](void* param)
+					{
+						auto item = (UINumberItem<float>*)(param);
+						auto parent = item->GetParent();
+						UIMenuStorage<Object>* menu = (UIMenuStorage<Object>*)parent;
+						auto obj = menu->GetItem();
+						auto pos = ENTITY::GET_ENTITY_ROTATION(obj, TRUE);
+						pos.y += item->GetValue();
+						ENTITY::SET_ENTITY_ROTATION(obj, pos.x, pos.y, pos.z, TRUE, TRUE);
+					}, 15.0, 15.0));
+					current_obj->Add(new UINumberItem<float>("Change Yaw", "", [this](void* param)
+					{
+						auto item = (UINumberItem<float>*)(param);
+						auto parent = item->GetParent();
+						UIMenuStorage<Object>* menu = (UIMenuStorage<Object>*)parent;
+						auto obj = menu->GetItem();
+						auto pos = ENTITY::GET_ENTITY_COORDS(obj, TRUE);
+						pos.z += item->GetValue();
+						ENTITY::SET_ENTITY_ROTATION(obj, pos.x, pos.y, pos.z, TRUE, TRUE);
+					}, 15.0, 15.0));
+					current_obj->Add(new UIItem("Fling Object", "", [this](void* param)
+					{
+						auto item = (UINumberItem<float>*)(param);
+						auto parent = item->GetParent();
+						UIMenuStorage<Object>* menu = (UIMenuStorage<Object>*)parent;
+						auto obj = menu->GetItem();
+						ENTITY::APPLY_FORCE_TO_ENTITY(obj, 1, GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), GAMEPLAY::GET_RANDOM_FLOAT_IN_RANGE(0, 100), 0, 0, 0, true, true, true, true, false, false);
+					}));
+
 					return current_obj;
 				}, i));
 			}

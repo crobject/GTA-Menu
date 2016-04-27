@@ -254,12 +254,14 @@ public:
 	UIContainer(Point position, Size_t size, Color_t color, std::string spriteDict = "commonmenu", std::string spriteName = "interaction_bgd", uint32_t pageSize = 15);
 	void AddItem(UIItem* elem);
 	virtual void Draw(const std::vector<UIItem*>::iterator& currentItem, std::string filter = "");
-	std::vector<UIItem*>& GetItems() { return Items; }
+	std::vector<UIItem*>& GetItems();
+	void SetFilter(std::string& str) { m_filter = str; }
 	UISprite& GetLogo() { return m_logo; }
 	UISprite& GetDescriptionBar() { return m_descrptionBar; }
 	UISprite& GetItemDescriptionBar() { return m_itemDescrptionBar; }
 protected:
-	std::vector<UIItem*> Items;
+	std::string m_filter;
+	std::vector<UIItem*> m_items;
 	uint32_t m_pageSize;
 	UISprite m_logo;
 	UISprite m_descrptionBar;

@@ -94,3 +94,16 @@ std::string GetVehicleModel(Vehicle veh)
 			return VEHICLE::GET_DISPLAY_NAME_FROM_VEHICLE_MODEL(hash);
 	}
 }
+void Teleport(Ped ped, Vector3 pos)
+{
+	auto veh = PED::GET_VEHICLE_PED_IS_IN(ped, FALSE);
+	ENTITY::SET_ENTITY_COORDS_NO_OFFSET(veh ? veh : ped, pos.x, pos.x, pos.z, TRUE, TRUE, TRUE);
+}
+
+void SetAnim(Ped ent, std::string anim, std::string base)
+{
+	STREAMING::REQUEST_ANIM_DICT((char*)anim.c_str());
+	while (!STREAMING::HAS_ANIM_DICT_LOADED((char*)anim.c_str()))
+		WAIT(0);
+	AI::TASK_PLAY_ANIM(ent, (char*)anim.c_str(), (char*)base.c_str(), 8.0f, 0.0f, -1, 9, 0, 0, 0, 0);
+}

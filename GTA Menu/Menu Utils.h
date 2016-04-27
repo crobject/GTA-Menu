@@ -12,3 +12,5 @@ std::string GetEntityModel(Entity ent);
 std::string GetVehicleModel(Vehicle veh);
 void SpawnProp(std::string propName, Ped ped, Client* client);
 void SetModel(std::string modelName);
+void Teleport(Ped ent, Vector3 pos);
+void SetAnim(Ped ent, std::string anim, std::string base);

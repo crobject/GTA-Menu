@@ -58,6 +58,8 @@ public:
 	bool DriveWater;
 	bool DriveAir;
 	bool MoneyDrop;
+	bool VehicleWeapon;
+	Hash vehicleWeaponHash;
 	Object WaterObject;
 	Object AirObject;
 	std::map<bool*, ScriptThread*> Threads;
