@@ -5,7 +5,7 @@
 
 class Client;
 
-void SpawnVehicle(std::string vehName, Ped ped);
+Vehicle SpawnVehicle(std::string vehName, Ped ped, bool inVehicle);
 void SpawnPed(std::string pedName, Ped ped);
 std::string GetPedModel(Ped ped);
 std::string GetEntityModel(Entity ent);

@@ -143,7 +143,7 @@ void Client::InitializeMenu()
 
 		quick_menu->Add(new UIItem("Spawn T20", "spawn a cool car", [this](void* param)->void
 		{
-			SpawnVehicle("t20", PLAYER::PLAYER_PED_ID());
+			SpawnVehicle("t20", PLAYER::PLAYER_PED_ID(), SpawnInVehicle);
 		}));
 		quick_menu->Add(new UIItemSuperSelect("Toggle All", ""));
 		quick_menu->Add(new UIItemToggle("Super Grip", "Toggle Super Grip", [this](void* param)->void
@@ -245,6 +245,93 @@ void Client::InitializeMenu()
 				GAMEPLAY::SET_EXPLOSIVE_MELEE_THIS_FRAME(PLAYER::PLAYER_ID());
 			});
 		}, &SuperPunch));
+		self_menu->Add(new UIItemToggle("Explosive Bullets", "", [this](void* param)
+		{
+			if (!Threads.count(&ExplosiveBullets))
+				Threads[&ExplosiveBullets] = new ScriptThread([](ScriptThread* thread)
+			{
+				GAMEPLAY::SET_EXPLOSIVE_AMMO_THIS_FRAME(PLAYER::PLAYER_ID());
+			});
+		}, &ExplosiveBullets));
+		self_menu->Add(new UIItemToggle("Fire Bullets", "", [this](void* param)
+		{
+			if (!Threads.count(&FireBullets))
+				Threads[&FireBullets] = new ScriptThread([](ScriptThread* thread)
+			{
+				GAMEPLAY::SET_FIRE_AMMO_THIS_FRAME(PLAYER::PLAYER_ID());
+			});
+		}, &FireBullets));
+		self_menu->Add(new UIItemList("Projectile", "", [this](void* param)
+		{
+			auto item = (uint32_t)param;
+			Projectile = (bool)item;
+			ProjectileType = item;
+			if (!Threads.count(&Projectile))
+				Threads[&Projectile] = new ScriptThread([this](ScriptThread* thread)
+			{
+				if (PED::IS_PED_SHOOTING(PLAYER::PLAYER_PED_ID()))
+				{
+					Vector3 pos;
+
+					switch (ProjectileType)
+					{
+
+					case 1:
+						WEAPON::GET_PED_LAST_WEAPON_IMPACT_COORD(PLAYER::PLAYER_PED_ID(), &pos);
+						FIRE::ADD_OWNED_EXPLOSION(PLAYER::PLAYER_PED_ID(), pos.x, pos.y, pos.z, 1, FLT_MAX, TRUE, TRUE, TRUE);
+						break;
+					case 2:
+						//http://gtaforums.com/topic/792378-replace-bullets-with-objectsvehicles/
+						float offset;
+						DWORD model = GAMEPLAY::GET_HASH_KEY((char *)vehicleModels[rand() % ARRAYSIZE(vehicleModels)].c_str());
+						STREAMING::REQUEST_MODEL(model);
+						while (!STREAMING::HAS_MODEL_LOADED(model)) WAIT(0);
+
+						if (STREAMING::IS_MODEL_IN_CDIMAGE(model) && STREAMING::IS_MODEL_A_VEHICLE(model))
+						{
+							Vector3 dim1, dim2;
+							GAMEPLAY::GET_MODEL_DIMENSIONS(model, &dim1, &dim2);
+
+							offset = dim2.y * 1.6;
+						}
+
+						Vector3 dir = ENTITY::GET_ENTITY_FORWARD_VECTOR(PLAYER::PLAYER_PED_ID());
+						pos = ENTITY::GET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), 1);
+						float rot = (ENTITY::GET_ENTITY_ROTATION(PLAYER::PLAYER_PED_ID(), 0)).z;
+
+						Vehicle veh = VEHICLE::CREATE_VEHICLE(model, pos.x + (dir.x * offset), pos.y + (dir.y * offset), pos.z, rot, 1, 1);
+
+						VEHICLE::SET_VEHICLE_ON_GROUND_PROPERLY(veh);
+
+						VEHICLE::SET_VEHICLE_FORWARD_SPEED(veh, 70.0);
+
+						STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(model);
+						break;
+					}
+				}
+			});
+		}, { "None", "Explosion", "Car" }));
+		self_menu->Add(new UIItemToggle("Aimbot", "", [this](void* param) 
+		{
+			if (!Threads.count(&Aimbot))
+				Threads[&Aimbot] = new ScriptThread([](ScriptThread* thread)
+			{
+				const uint32_t numElements = 10;
+				const uint32_t arrSize = numElements * 2 + 2;  //Start at index 2, and the odd elements are padding
+				Ped peds[arrSize];
+				peds[0] = numElements;
+				uint32_t count = PED::GET_PED_NEARBY_PEDS(PLAYER::PLAYER_PED_ID(), peds, -1);
+				for (uint32_t i = 0; i < count; i++)
+				{
+					uint32_t offsettedID = i * 2 + 2;
+					auto currentPed = peds[offsettedID];
+					if (currentPed == PLAYER::PLAYER_PED_ID() || ENTITY::IS_ENTITY_DEAD(currentPed) || ENTITY::IS_ENTITY_VISIBLE(currentPed) || !PED::IS_PED_ON_FOOT(currentPed))
+						continue;
+					
+				}
+				
+			});
+		}, &Aimbot));
 		self_menu->Add(new UINumberItem<uint32_t>("Wanted Level", "", [this](void* param) 
 		{
 			auto item = (UINumberItem<uint32_t>*)(param);
@@ -271,35 +358,98 @@ void Client::InitializeMenu()
 				offsettedID += 2;
 			}
 			
-			PED::SET_PED_INTO_VEHICLE(PLAYER::PLAYER_PED_ID(), vehs[offsettedID], seatIndex);
+			PED::SET_PED_INTO_VEHICLE(PLAYER::PLAYER_PED_ID(), vehs[offsettedID], -1);
 		}));
-		self_menu->Add(new UIItemToggle("Drop Money", "make it rain", [this](void* param)->void
+		self_menu->Add(new UIItem("Set Default Model", "", [](void* param)
 		{
-			if (!Threads.count(&MoneyDrop))
-				Threads[&MoneyDrop] = new ScriptThread([](ScriptThread* thread)
+			//TODO
+		}));
+
+		self_menu->Add(new UIItemSubMenu("Component Menu", "Change what your player is wearing", this, [this]()->UIMenu*
+		{
+			auto componentMenu = SpawnMenu("Component Menu");
+			componentMenu->Add(new UINumberItem<int32_t>("Face (type)", "", [](void* param) 
 			{
-				if (GAMEPLAY::GET_GAME_TIMER() % 20 != 0)
-					return;
-					for (Player i = 0; i < 32; i++)
-					{
-						auto ped = PLAYER::GET_PLAYER_PED(i);
-						if (ENTITY::DOES_ENTITY_EXIST(ped) && ped)
-						{
-							STREAMING::REQUEST_MODEL(0x113FD533);
-
-							auto pp = ENTITY::GET_ENTITY_COORDS(ped, 0);
-							if (STREAMING::HAS_MODEL_LOADED(0x113FD533))
-							{
-								static Any PICKUP_MONEY_CASE = GAMEPLAY::GET_HASH_KEY("PICKUP_MONEY_CASE");
-								OBJECT::CREATE_AMBIENT_PICKUP(PICKUP_MONEY_CASE, pp.x, pp.y, pp.z + 1,0, 40000, 0x113FD533, FALSE, TRUE);
-								STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(0x113FD533);
-							}
-
-						}
-					}
-			
-			});
-		}, &MoneyDrop));
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 0, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Beard", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 1, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Haircut", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 2, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Shirt", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 3, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Pants", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 4, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Hands / Gloves", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 5, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Shoes", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 6, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Eyes", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 7, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Accessories", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 8, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Mission Items/Tasks", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 9, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Decals", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 10, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			componentMenu->Add(new UINumberItem<int32_t>("Other Shirts", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID(), 11, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			return componentMenu;
+		}));
+		self_menu->Add(new UIItemSubMenu("Prop Menu", "Change what your player is holding", this, [this]()->UIMenu*
+		{
+			auto propMenu = SpawnMenu("Component Menu");
+			propMenu->Add(new UINumberItem<int32_t>("Head Props", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_PROP_INDEX(PLAYER::PLAYER_PED_ID(), 0, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			propMenu->Add(new UINumberItem<int32_t>("Eye Props", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_PROP_INDEX(PLAYER::PLAYER_PED_ID(), 1, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			propMenu->Add(new UINumberItem<int32_t>("Ear Props", "", [](void* param)
+			{
+				auto item = (UINumberItem<uint32_t>*)(param);
+				PED::SET_PED_PROP_INDEX(PLAYER::PLAYER_PED_ID(), 2, item->GetValue(), 0, PED::GET_PED_PALETTE_VARIATION(PLAYER::PLAYER_PED_ID(), 0));
+			}));
+			return propMenu;
+		}));
 		return self_menu;
 	}));
 #pragma endregion
@@ -314,11 +464,12 @@ void Client::InitializeMenu()
 			{
 				menu1->Add(new UIItem(i, "", [this](void* param) {
 					auto item = (UIItem*)param;
-					SpawnVehicle(item->GetText(), PLAYER::PLAYER_PED_ID());
+					SpawnVehicle(item->GetText(), PLAYER::PLAYER_PED_ID(), SpawnInVehicle);
 				}));
 			}
 			return menu1;
 		}));
+		veh_menu->Add(new UIItemToggle("Teleport to Spawned Vehicle", "", [this](void* param) {}, &SpawnInVehicle));
 		veh_menu->Add(new UIItem("Fix Car", "", [this](void* param)
 		{
 			auto handle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), FALSE);
@@ -351,19 +502,22 @@ void Client::InitializeMenu()
 		}));
 		veh_menu->Add(new UIItemToggle("Rainbow Car", "", [this](void* param)
 		{
-			if (!Threads.count(&RainbowCar))
+			if (!Threads.count(&RainbowCar)) {
 				Threads[&RainbowCar] = new ScriptThread([](ScriptThread* thread)
-			{
-				auto handle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), FALSE);
-				int Red = GAMEPLAY::GET_RANDOM_INT_IN_RANGE(0, 255),
-					Green = GAMEPLAY::GET_RANDOM_INT_IN_RANGE(0, 255),
-					Blue = GAMEPLAY::GET_RANDOM_INT_IN_RANGE(0, 255);
-				if (handle)
 				{
-					VEHICLE::SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(handle, Red, Green, Blue);
-					VEHICLE::SET_VEHICLE_CUSTOM_SECONDARY_COLOUR(handle, Red, Green, Blue);
-				}
-			});
+					auto handle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), FALSE);
+					int Red = GAMEPLAY::GET_RANDOM_INT_IN_RANGE(0, 255),
+						Green = GAMEPLAY::GET_RANDOM_INT_IN_RANGE(0, 255),
+						Blue = GAMEPLAY::GET_RANDOM_INT_IN_RANGE(0, 255);
+					if (handle)
+					{
+						VEHICLE::SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(handle, Red, Green, Blue);
+						VEHICLE::SET_VEHICLE_CUSTOM_SECONDARY_COLOUR(handle, Red, Green, Blue);
+					
+					}
+					thread->Sleep(500);
+				});		
+			}
 		}, &RainbowCar));
 		veh_menu->Add(new UIItem("Flip Car", "", [this](void* param)
 		{
@@ -388,6 +542,7 @@ void Client::InitializeMenu()
 				{
 					VEHICLE::SET_VEHICLE_FORWARD_SPEED(handle, 0.0f);
 				}
+				thread->Sleep(500);
 			});
 		}, &CarBoost));
 		veh_menu->Add(new UIItem("Invincible Car", "", [this](void* param)
@@ -688,8 +843,235 @@ void Client::InitializeMenu()
 	{
 
 		auto tele_menu = SpawnMenu("Teleport Menu");
+		tele_menu->Add(new UIItem("Teleport to Blip", "", [](void* param)
+		{
+			//ripped from native trainer
+			Vector3 coords;
+			bool blipFound = false;
+			// search for marker blip
+			int blipIterator = UI::_GET_BLIP_INFO_ID_ITERATOR();
+			for (Blip i = UI::GET_FIRST_BLIP_INFO_ID(blipIterator); UI::DOES_BLIP_EXIST(i) != 0; i = UI::GET_NEXT_BLIP_INFO_ID(blipIterator))
+			{
+				if (UI::GET_BLIP_INFO_ID_TYPE(i) == 4)
+				{
+					coords = UI::GET_BLIP_INFO_ID_COORD(i);
+					blipFound = true;
+					break;
+				}
+			}
+			if (blipFound)
+			{
+				// load needed map region and check height levels for ground existence
+				bool groundFound = false;
+				static float groundCheckHeight[] = {
+					100.0, 150.0, 50.0, 0.0, 200.0, 250.0, 300.0, 350.0, 400.0,
+					450.0, 500.0, 550.0, 600.0, 650.0, 700.0, 750.0, 800.0
+				};
+				for (int i = 0; i < sizeof(groundCheckHeight) / sizeof(float); i++)
+				{
+					auto coord2 = coords;
+					coord2.z = groundCheckHeight[i];
+					Teleport(PLAYER::PLAYER_PED_ID(), coord2);
+					WAIT(100);
+					if (GAMEPLAY::GET_GROUND_Z_FOR_3D_COORD(coords.x, coords.y, groundCheckHeight[i], &coords.z))
+					{
+						groundFound = true;
+						coords.z += 3.0;
+						break;
+					}
+				}
+				// if ground not found then set Z in air and give player a parachute
+				if (!groundFound)
+				{
+					coords.z = 1000.0;
+					WEAPON::GIVE_DELAYED_WEAPON_TO_PED(PLAYER::PLAYER_PED_ID(), 0xFBAB5776, 1, 0);
+				}
+			}
+
+		}));
+		tele_menu->Add(new UIItemList("Airfield", "", [](void* param)
+		{
+			auto item = (int32_t)param;
+			float locations[][3] = { { -1102.290,-2894.520,13.947 },
+									{ 2121.700,	4796.300,41.100 },
+									{ 1747.000,	3273.700,41.100 },
+								   };
+			if (item <= ARRAYSIZE(locations))
+			{
+				Vector3 pos;
+				pos.x = locations[item][0];
+				pos.y = locations[item][1];
+				pos.z = locations[item][2];
+
+				Teleport(PLAYER::PLAYER_PED_ID(), pos);
+			}
+		}, { "Airport - Helipad","McKenzie Field Runway","Sandy Shores Airfield"}));
+		tele_menu->Add(new UIItemList("Easter Egg", "", [](void* param)
+		{
+			auto item = (int32_t)param;
+			float locations[][3] = { 
+				{ -595.000,2087.000,132.000 },
+				{ -420.000,2065.750,120.000 },
+				{ -598.000,2096.000,131.000 },
+				{ 3862.411,-4959.250,93.000 },
+				{ -3161.078,3001.998,-37.974 },
+				{ 3199.748,-379.018,-22.500 },
+				{ -942.350,6608.752,-20.912 },
+				{ 4273.950,2975.714,-170.746 },
+				{ 4287.000,2967.000,-176.000 },
+				{ -1254.831,6795.000,-175.000 },
+				{ 762.426,7380.371,-111.377 },
+				{ 4201.633,3643.821,-39.016 },
+
+			};
+			if (item <= ARRAYSIZE(locations))
+			{
+				Vector3 pos;
+				pos.x = locations[item][0];
+				pos.y = locations[item][1];
+				pos.z = locations[item][2];
+
+				Teleport(PLAYER::PLAYER_PED_ID(), pos);
+			}
+		}, { "Black UFO","Dead Sea Monster","Mineshaft, Great Chaparral - Inside (Next Gen)","Mineshaft, Great Chaparral - Inside Inaccessible Barrier","Mineshaft, Great Chaparral - Outside",
+			"North Yankton - Alien","Sunken Body","Sunken Cargo Ship","Sunken Plane","Underwater Hatch","Underwater Hatch from Lost Series","Underwater Hatch with Light","Underwater UFO","Underwater WW2 Tank" }));
+		tele_menu->Add(new UIItemList("Restricted Areas", "", [](void* param)
+		{
+			auto item = (int32_t)param;
+			float locations[][3] = {
+				{ -1170.115,4926.134,224.355 },
+				{ -1166.000,4927.000,224.000 },
+				{ -1143.150,4951.188,230.153 },
+				{ -1002.000,4842.000,280.000 },
+				{ -2019.060,2956.453,32.810 },
+				{ -2148.350,3031.762,32.810 },
+				{ -2047.400,3132.100,32.800 },
+				{ -2012.847,2956.527,32.810 },
+				{ -2148.351,3031.762,33.810 },
+				{ -2356.094,3248.645,101.451 },
+				{ -2345.793,3267.464,33.811 },
+				{ -2501.939,3309.898,92.967 },
+				{ 1690.000,2653.000,58.000 },
+				{ 1690.000,2536.000,58.000 },
+
+			};
+			if (item <= ARRAYSIZE(locations))
+			{
+				Vector3 pos;
+				pos.x = locations[item][0];
+				pos.y = locations[item][1];
+				pos.z = locations[item][2];
+
+				Teleport(PLAYER::PLAYER_PED_ID(), pos);
+			}
+		}, { "Altruist Camp","Altruist Camp - Altar","Altruist Camp - Roof","Altruist Camp Mountain - Radio Tower","Military - Jet Spawn point 1","Military - Jet Spawn point 2","Military Base","Military Base","Military Base (Jet Spawn)",
+			"Military Base Control Tower (Inside Tower)","Military Base Control Tower (Level 1)","Military Base Radio Tower","Prison Guard Tower (North)","Prison Guard Tower (South)", }));
+		tele_menu->Add(new UIItemList("Shops", "", [](void* param)
+		{
+			auto item = (int32_t)param;
+			float locations[][3] = { 
+				{ 1696.105,3755.167,34.705 },
+				{ 247.365,-45.878,69.941 },
+				{ 53.940,-1390.770,29.373 },
+				{ -367.734,-130.859,39.117 },
+				{ -335.000,-136.000,40.000 },
+				{ -159.300,-304.329,39.733 },
+				{ 319.788,172.231,104.744 },
+			};
+			if (item <= ARRAYSIZE(locations))
+			{
+				Vector3 pos;
+				pos.x = locations[item][0];
+				pos.y = locations[item][1];
+				pos.z = locations[item][2];
+
+				Teleport(PLAYER::PLAYER_PED_ID(), pos);
+			}
+		}, { "Ammunation (Sandy Shore)","Ammunation, Hawick","Car Wash - Hands on","Los Santos Customs","Los Santos Customs - Inside","Ponsonbys Clothing, Burton","Tattoo Parlor" }));
+		tele_menu->Add(new UIItemList("Interesting Spots", "", [](void* param)
+		{
+			auto item = (int32_t)param;
+			float locations[][3] = {
+				{ -1034.600,-2733.600,13.800 },
+				{ -1561.525,-3232.345,27.336 },
+				{ -935.936,4836.747,310.520 },
+				{ -2177.440,5182.596,16.475 },
+				{ -167.982,-1001.930,296.206 },
+				{ -120.351,-977.861,304.248 },
+				{ -119.860,-976.439,306.339 },
+				{ -147.593,-964.695,254.133 },
+				{ -129.384,-951.133,218.882 },
+				{ -1670.700,-1125.000,13.000 },
+				{ -769.800,331.208,234.269 },
+				{ -438.796,1075.821,353.000 },
+				{ 130.682,-634.945,262.851 },
+				{ 3369.224,5184.150,1.460 },
+				{ 3336.174,5172.941,18.316 },
+				{ 3430.990,5174.220,43.500 },
+				{ 895.561,-987.624,44.271 },
+				{ -74.942,-818.635,327.174 },
+				{ -74.942,-818.635,2590.223 },
+				{ -74.942,-818.635,5841.424 },
+				{ -74.942,-818.635,10800.000 },
+				{ -250.604,-2030.000,30.000 },
+				{ -104.820,-856.374,41.087 },
+				{ -131.063,-865.810,29.468 },
+				{ 546.037,-183.368,54.498 },
+				{ 495.000,5586.000,794.000 },
+				{ 430.204,5614.734,766.168 },
+				{ 425.400,5614.300,766.500 },
+				{ 489.317,5580.887,792.852 },
+				{ 413.471,5572.821,779.682 },
+				{ -149.345,7130.246,700.117 },
+				{ 2876.984,5911.455,370.000 },
+				{ -1186.107,3849.753,489.064 },
+				{ -1212.987,3848.685,491.000 },
+				{ -179.984,6150.478,42.637 },
+				{ 178.330,7041.822,1.867 },
+				{ 17.832,7630.014,13.507 },
+				{ -125.654,7271.894,16.737 },
+				{ 106.697,7282.055,1.882 },
+				{ -1464.000,182.000,55.000 },
+				{ 334.210,-1644.770,98.496 },
+				{ -540.482,4402.359,35.379 },
+				{ -175.219,4244.194,44.073 },
+				{ -589.532,4395.390,18.148 },
+				{ -463.662,4483.654,36.037 },
+				{ -597.953,4475.291,25.689 },
+				{ -530.675,4534.996,89.046 },
+				{ -551.000,-194.000,77.000 },
+				{ -129.964,8130.873,6705.651 },
+				{ 16.969,-646.180,16.088 },
+				{ 1033.729,-270.564,50.855 },
+				{ -4.579,-742.428,16.503 },
+				{ -2183.034,-1051.004,-142.771 },
+				{ -1942.354,-1128.529,-34.993 },
+				{ 684.593,573.285,131.000 },
+				{ -558.981,2945.701,14.592 },
+				{ -1202.090,2802.440,14.826 },
+
+			};
+			if (item <= ARRAYSIZE(locations))
+			{
+				Vector3 pos;
+				pos.x = locations[item][0];
+				pos.y = locations[item][1];
+				pos.z = locations[item][2];
+
+				Teleport(PLAYER::PLAYER_PED_ID(), pos);
+			}
+		}, { "Airport Entrance","Airport Terminal","Altruist Camp Mountain","Avi Hideout (Kill Boost Island)","Construction Site - Crane (1)","Construction Site - Crane (2) Balcony",
+			"Construction Site - Crane 3 (Scenic)","Construction Site on building","Construction Site, Building Wireframe","Del Perro Pier - Ferris Wheel","Eclipse Towers Roof","Galileo Observatory Roof",
+			"IAA Building Roof","Lighthouse - Dock","Lighthouse - Dock Winding stairs","Lighthouse near Mt. Gondor (Highest point)","Maibatsu Motors Inc. - Roof","Maze Bank - 0 Helipad","Maze Bank - 1 In the Sky",
+			"Maze Bank - 2 Above Clouds","Maze Bank - 3 In the Atmosphere","Maze Bank Arena Entrance","Maze Bank Plaza - Water Fountain","Maze Bank Plaza - Water Fountain with cube","Mechanic, Hawick","Mt. Chiliad",
+			"Mt. Chiliad - Jump","Mt. Chiliad - Ramp","Mt. Chiliad - View (City)","Mt. Chiliad - View (Scenic)","Mt. Chiliad Near - Above Cloud","Mt. Gordo","Mt. Josiah","Mt. Josiah","Paleto Bay - Factory Lookout",
+			"Paleto Bay Beach","Paleto Bay Beach - Island (Farthest)","Paleto Bay Beach - Island with flowers","Paleto Bay Beach - Underwater","Playboy Mansion, Richman","Police, Rancho - Parking Roof","Raton Canyon - A Waterfall",
+			"Raton Canyon - Calafia Bridge","Raton Canyon - Creek swimming (Next to waterfall)","Raton Canyon - Private Hangout (Creek)","Raton Canyon - Private Hangout 2","Raton Canyon Train Tracks Bridge","Rockford Hills City Hall, Snipering Spot",
+			"Sky","Underground - Tunnel Construction","Underground - Tunnel Entrance (Drain)","Underground - Tunnel Loop","Underwater Hotspot (For Underwater Car)","Vespucci Beach Coral Reef","Vinewood Bowl",
+			"Zancudo River", "Zancudo River - Dirtbike trail" }));
 		return tele_menu;
 	}));
+
 #pragma endregion
 #pragma region Player Menu
 	CurrentMenu->Add(new UIItemSubMenu("Player Menu", "Actions that effect other players in your current session", this, [this]()->UIMenu*
@@ -727,6 +1109,11 @@ void Client::InitializeMenu()
 					auto parent = ((UIItem*)(param))->GetParent();
 					UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
 					PED::CLONE_PED(PLAYER::GET_PLAYER_PED(player->GetItem()), 1.0, TRUE, FALSE);
+				}));
+				selected_player_menu->Add(new UIItem("Clear Animation", "", [](void* param) {
+					auto parent = ((UIItem*)(param))->GetParent();
+					UIMenuStorage<Player>* player = (UIMenuStorage<Player>*)parent;
+					AI::CLEAR_PED_TASKS(PLAYER::GET_PLAYER_PED(player->GetItem()));
 				}));
 				selected_player_menu->Add(new UIItemDisplayPlayerMenu("Animation Options", "Set animations for the player", this, [this, i]()->UIMenu*
 				{

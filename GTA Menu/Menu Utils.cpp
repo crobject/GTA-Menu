@@ -3,7 +3,7 @@
 #include "Lists.h"
 #include "Client.h"
 
-void SpawnVehicle(std::string vehName, Ped ped)
+Vehicle SpawnVehicle(std::string vehName, Ped ped, bool inVehicle)
 {
 	Hash hash = GAMEPLAY::GET_HASH_KEY((char*)vehName.c_str());
 	Vector3 pos = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ped, 0.0, 5.0, 0);
@@ -11,9 +11,12 @@ void SpawnVehicle(std::string vehName, Ped ped)
 	STREAMING::REQUEST_MODEL(hash);
 	if (STREAMING::HAS_MODEL_LOADED(hash))
 	{
-		uint32_t VehicleHandle = VEHICLE::CREATE_VEHICLE(hash, pos.x, pos.y, pos.z, 0, FALSE, FALSE);
+		Vehicle VehicleHandle = VEHICLE::CREATE_VEHICLE(hash, pos.x, pos.y, pos.z, 0, TRUE, TRUE);
 		VEHICLE::SET_VEHICLE_ON_GROUND_PROPERLY(VehicleHandle);
 		STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(hash);
+		if (inVehicle)
+			PED::SET_PED_INTO_VEHICLE(ped, VehicleHandle, -1);
+		return VehicleHandle;
 	}
 }
 
@@ -97,7 +100,7 @@ std::string GetVehicleModel(Vehicle veh)
 void Teleport(Ped ped, Vector3 pos)
 {
 	auto veh = PED::GET_VEHICLE_PED_IS_IN(ped, FALSE);
-	ENTITY::SET_ENTITY_COORDS_NO_OFFSET(veh ? veh : ped, pos.x, pos.x, pos.z, TRUE, TRUE, TRUE);
+	ENTITY::SET_ENTITY_COORDS_NO_OFFSET(veh ? veh : ped, pos.x, pos.y, pos.z, TRUE, TRUE, TRUE);
 }
 
 void SetAnim(Ped ent, std::string anim, std::string base)

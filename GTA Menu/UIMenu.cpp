@@ -61,7 +61,7 @@ void UIMenu::ScrollUp()
 	if (GetCurrentItem() != m_container.GetItems().begin())
 		m_currentIndex--;
 	else
-		m_currentIndex = m_container.GetItems().size();
+		m_currentIndex = m_container.GetItems().size() - 1;
 	auto dist = std::distance(m_container.GetItems().begin(), GetCurrentItem());
 	if (dist > 14)
 		m_scrollbar.SetPosition(Point(m_position.m_x, m_position.m_y + sizeOffset + (m_ItemSize * (14 ))));

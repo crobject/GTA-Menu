@@ -47,7 +47,10 @@ public:
 	bool SuperRun;
 	bool SuperJump;
 	bool SuperPunch;
+	bool ExplosiveBullets;
+	bool FireBullets;
 	bool RainbowCar;
+	bool Aimbot;
 	bool OpenDoor;
 	bool CarBoost;
 	bool Keyboard;
@@ -59,6 +62,9 @@ public:
 	bool DriveAir;
 	bool MoneyDrop;
 	bool VehicleWeapon;
+	bool SpawnInVehicle;
+	bool Projectile;
+	uint32_t ProjectileType;
 	Hash vehicleWeaponHash;
 	Object WaterObject;
 	Object AirObject;
