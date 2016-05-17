@@ -6,7 +6,7 @@
 #include "UIItem.h"
 #include "Lists.h"
 #include "Menu Utils.h"
-
+#include <ctime>
 Client::Client()
 {
 }
@@ -224,11 +224,12 @@ void Client::InitializeMenu()
 
 		self_menu->Add(new UIItemToggle("Super Run", "Toggle Super Run", [this](void* param)->void
 		{
-			if (SuperRun)
-				PLAYER::_SET_MOVE_SPEED_MULTIPLIER(PLAYER::PLAYER_ID(), 1.49);
-			else
-				PLAYER::_SET_MOVE_SPEED_MULTIPLIER(PLAYER::PLAYER_ID(), 1.00);
+			PLAYER::_SET_MOVE_SPEED_MULTIPLIER(PLAYER::PLAYER_ID(), SuperRun ? 1.49 : 1.0);
 		}, &SuperRun));
+		self_menu->Add(new UIItemToggle("Super Run", "Toggle Super Run", [this](void* param)->void
+		{
+			PLAYER::_SET_SWIM_SPEED_MULTIPLIER(PLAYER::PLAYER_ID(), SuperSwim ? 1.49 : 1.0);
+		}, &SuperSwim));
 		self_menu->Add(new UIItemToggle("Super Jump", "", [this](void* param)->void
 		{
 			if (!Threads.count(&SuperJump))
@@ -261,6 +262,15 @@ void Client::InitializeMenu()
 				GAMEPLAY::SET_FIRE_AMMO_THIS_FRAME(PLAYER::PLAYER_ID());
 			});
 		}, &FireBullets));
+		self_menu->Add(new UIItemToggle("Recharge Ability", "", [this](void* param)
+		{
+			if (!Threads.count(&UnlimitedAbility))
+				Threads[&UnlimitedAbility] = new ScriptThread([](ScriptThread* thread)
+			{
+				PLAYER::_RECHARGE_SPECIAL_ABILITY(PLAYER::PLAYER_ID(), TRUE);
+			});
+		}, &UnlimitedAbility));
+
 		self_menu->Add(new UIItemList("Projectile", "", [this](void* param)
 		{
 			auto item = (uint32_t)param;
@@ -283,10 +293,12 @@ void Client::InitializeMenu()
 					case 2:
 						//http://gtaforums.com/topic/792378-replace-bullets-with-objectsvehicles/
 						float offset;
-						DWORD model = GAMEPLAY::GET_HASH_KEY((char *)vehicleModels[rand() % ARRAYSIZE(vehicleModels)].c_str());
+						Hash model = GAMEPLAY::GET_HASH_KEY((char *)vehicleModels[rand() % ARRAYSIZE(vehicleModels)].c_str());
+						while (!VEHICLE::IS_THIS_MODEL_A_CAR(model))
+							model = GAMEPLAY::GET_HASH_KEY((char *)vehicleModels[rand() % ARRAYSIZE(vehicleModels)].c_str());
 						STREAMING::REQUEST_MODEL(model);
 						while (!STREAMING::HAS_MODEL_LOADED(model)) WAIT(0);
-
+						
 						if (STREAMING::IS_MODEL_IN_CDIMAGE(model) && STREAMING::IS_MODEL_A_VEHICLE(model))
 						{
 							Vector3 dim1, dim2;
@@ -362,9 +374,50 @@ void Client::InitializeMenu()
 		}));
 		self_menu->Add(new UIItem("Set Default Model", "", [](void* param)
 		{
-			//TODO
+			PED::SET_PED_DEFAULT_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID());
 		}));
+		self_menu->Add(new UIItemToggle("Silent Player", "", [this](void* param)
+		{
+			PLAYER::SET_PLAYER_NOISE_MULTIPLIER(PLAYER::PLAYER_ID(), SilentPlayer ? 0.0 : 1.0);
+		},&SilentPlayer));
+		self_menu->Add(new UIItemToggle("Walking Radio", "", [this](void* param) 
+		{
+			AUDIO::SET_MOBILE_RADIO_ENABLED_DURING_GAMEPLAY(MobileRadio);
+		}, &MobileRadio));
+		self_menu->Add(new UIItemToggle("Disable HUD", "", [this](void* param)
+		{
+			if (!Threads.count(&DisableHUD))
+				Threads[&DisableHUD] = new ScriptThread([](ScriptThread* thread)
+			{
+				UI::HIDE_HUD_AND_RADAR_THIS_FRAME();
 
+			});
+		}, &DisableHUD));
+		self_menu->Add(new UIItem("Sync Time", "", [](void* param)
+		{
+			time_t now = time(0);
+			tm t;
+			localtime_s(&t, &now);
+			TIME::SET_CLOCK_TIME(t.tm_hour, t.tm_min, t.tm_sec);
+		}));
+		self_menu->Add(new UIItemToggle("Shrink Player", "", [this](void* param)
+		{
+			PED::SET_PED_CONFIG_FLAG(PLAYER::PLAYER_PED_ID(), 223, ShrinkPlayer);
+		}, &ShrinkPlayer));
+		self_menu->Add(new UIItemList("Set Vision", "", [this](void* param) 
+		{
+			std::string* effect = (std::string*)param;			
+			if (effect)
+			{
+				if (GRAPHICS::_GET_SCREEN_EFFECT_IS_ACTIVE((char*)effect->c_str()))
+				{
+					GRAPHICS::_STOP_SCREEN_EFFECT((char*)effect->c_str());
+				}
+				GRAPHICS::_START_SCREEN_EFFECT((char*)effect->c_str(), 0, false);
+				Vision = *effect;
+			}
+
+		}, { "PeyoteIn", "PeyoteOut", "DrugsTrevorClownsFight", "RaceTurbo", "Rampage", "Dont_tazeme_bro" }, false));
 		self_menu->Add(new UIItemSubMenu("Component Menu", "Change what your player is wearing", this, [this]()->UIMenu*
 		{
 			auto componentMenu = SpawnMenu("Component Menu");
@@ -470,6 +523,21 @@ void Client::InitializeMenu()
 			return menu1;
 		}));
 		veh_menu->Add(new UIItemToggle("Teleport to Spawned Vehicle", "", [this](void* param) {}, &SpawnInVehicle));
+		veh_menu->Add(new UIItemSubMenu("Modify Primary Color", "", this, [this]()->UIMenu*
+		{
+			uint32_t veh_color[3] = { 0 };
+			auto veh_handle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), FALSE);
+			if (veh_handle)
+				VEHICLE::GET_VEHICLE_COLOR(veh_handle, (int*)&veh_color[0], (int*)&veh_color[1], (int*)&veh_color[2]);
+			return new UIMenuRGB(UIText("Modify Primary Color", Point(100, 75), DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
+				UIText("", Point(100, 75 + 40), DEFAULT_TITLE_SCALE - 0.5), Point(100, 75), Size_t(200, 500), [](uint32_t* param)
+				{
+					auto veh_handle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), FALSE);
+					if (veh_handle)
+						VEHICLE::SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(veh_handle, param[0], param[1], param[2]);
+				},[] {}, [] {}, veh_color);
+
+		}));
 		veh_menu->Add(new UIItem("Fix Car", "", [this](void* param)
 		{
 			auto handle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), FALSE);
@@ -534,8 +602,8 @@ void Client::InitializeMenu()
 				if (handle && IsKeyDown(VK_OEM_PLUS))
 				{
 					AUDIO::SET_VEHICLE_BOOST_ACTIVE(handle, TRUE);
-					auto vel = ENTITY::GET_ENTITY_VELOCITY(handle);
-					VEHICLE::SET_VEHICLE_FORWARD_SPEED(handle, vel.x + 50.0f);
+					auto vel = ENTITY::GET_ENTITY_SPEED(handle);
+					VEHICLE::SET_VEHICLE_FORWARD_SPEED(handle, vel + vel * 0.05f);
 					AUDIO::SET_VEHICLE_BOOST_ACTIVE(handle, FALSE);
 				}
 				else if (handle && IsKeyDown(VK_OEM_MINUS))
@@ -830,7 +898,58 @@ void Client::InitializeMenu()
 				auto currentPed = peds[offsettedID];
 				auto type = PED::GET_PED_TYPE(currentPed);
 				if (ENTITY::DOES_ENTITY_EXIST(currentPed))
-					menu2->Add(new UIItem((pedTypes.count(type) ? pedTypes[type] : "Unknown") + (std::string)" - " + GetPedModel(currentPed), "", [](void* param) {}));
+					menu2->Add(new UIItemDisplayPedMenu((pedTypes.count(type) ? pedTypes[type] : "Unknown") + (std::string)" - " + GetPedModel(currentPed), "", this, [this, currentPed]()->UIMenu*
+					{
+						Point title_point = Point(100, 75);
+						Point sub_title_point = Point(110, 100);
+						auto selected_ped_menu = new UIMenuStorage<Ped>(UIText(((*CurrentMenu->GetCurrentItem()))->GetText(), title_point, DEFAULT_TITLE_SCALE, Color_t(255, 255, 255, 255), HouseScript, false),
+							UIText("", sub_title_point, DEFAULT_TITLE_SCALE - 0.75), title_point, Size_t(200, 500), [] {}, [] {}, currentPed);
+						selected_ped_menu->Add(new UIItem("Explode Head", "", [](void* param)
+						{
+							auto parent = ((UIItem*)(param))->GetParent();
+							UIMenuStorage<Ped>* ped = (UIMenuStorage<Ped>*)parent;
+							PED::EXPLODE_PED_HEAD(ped->GetItem(), 0x5FC3C11);
+						}));
+						selected_ped_menu->Add(new UIItem("Set as Cop", "", [](void* param)
+						{
+							auto parent = ((UIItem*)(param))->GetParent();
+							UIMenuStorage<Ped>* ped = (UIMenuStorage<Ped>*)parent;
+							PED::SET_PED_AS_COP(ped->GetItem(), TRUE);
+						}));
+						selected_ped_menu->Add(new UIItem("Delete", "", [](void* param)
+						{
+							auto parent = ((UIItem*)(param))->GetParent();
+							UIMenuStorage<Ped>* ped = (UIMenuStorage<Ped>*)parent;
+							auto p = ped->GetItem();
+							PED::DELETE_PED(&p);
+						}));
+						selected_ped_menu->Add(new UIItem("Clone Ped", "", [](void* param)
+						{
+							auto parent = ((UIItem*)(param))->GetParent();
+							UIMenuStorage<Ped>* ped = (UIMenuStorage<Ped>*)parent;
+							PED::CLONE_PED(ped->GetItem(), ENTITY::GET_ENTITY_HEADING(ped->GetItem()), TRUE, TRUE);
+						}));
+						selected_ped_menu->Add(new UIItem("Give All Weapons", "", [](void* param)
+						{
+							auto parent = ((UIItem*)(param))->GetParent();
+							UIMenuStorage<Ped>* ped = (UIMenuStorage<Ped>*)parent;
+							for (int i = 0; i < ARRAYSIZE(WeapHashes); i++)
+								WEAPON::GIVE_DELAYED_WEAPON_TO_PED(ped->GetItem(), WeapHashes[i], 9999, 1);
+						}));
+						selected_ped_menu->Add(new UIItem("Give Body Armour", "", [](void* param)
+						{
+							auto parent = ((UIItem*)(param))->GetParent();
+							UIMenuStorage<Ped>* ped = (UIMenuStorage<Ped>*)parent;
+							PED::ADD_ARMOUR_TO_PED(ped->GetItem(), 9999);
+						}));
+						selected_ped_menu->Add(new UIItem("Add to Gang", "", [this](void* param)
+						{
+							auto parent = ((UIItem*)(param))->GetParent();
+							UIMenuStorage<Ped>* ped = (UIMenuStorage<Ped>*)parent;							
+							PED::SET_PED_AS_GROUP_MEMBER(ped->GetItem(), PLAYER::GET_PLAYER_GROUP(PLAYER::PLAYER_ID()));
+						}));
+						return selected_ped_menu;
+					}, currentPed));
 			}
 			return menu2;
 		}));
@@ -1077,7 +1196,7 @@ void Client::InitializeMenu()
 	CurrentMenu->Add(new UIItemSubMenu("Player Menu", "Actions that effect other players in your current session", this, [this]()->UIMenu*
 	{
 		auto player_menu = SpawnMenu("Player Menu");
-		for (uint32_t i = 0; i < 32; i++)
+		for (Player i = 0; i < 32; i++)
 		{
 			player_menu->Add(new UIItemDisplayPlayerMenu(PLAYER::GET_PLAYER_NAME(i), "Options that effect this player", this, [this, i]()->UIMenu*
 			{
@@ -1131,6 +1250,19 @@ void Client::InitializeMenu()
 						}));
 					}
 					return anim_player_menu;
+				}, i));
+				selected_player_menu->Add(new UIItemDisplayPlayerMenu("Attach Prop", "Attach a prop to this player", this, [this, i]() ->UIMenu*
+				{
+					auto menu1 = SpawnMenu("Attach Object");
+					for each (auto j in propNames)
+					{
+						menu1->Add(new UIItem(j, "", [this, i](void* param) {
+							auto item = (UIItem*)param;
+							auto prop = SpawnProp(item->GetText(), PLAYER::GET_PLAYER_PED(i), this);
+							ENTITY::ATTACH_ENTITY_TO_ENTITY(PLAYER::GET_PLAYER_PED(i), prop, PED::GET_PED_BONE_INDEX(PLAYER::GET_PLAYER_PED(i), 60309), 0.07, 0.10, 0.0, 0.0, -90.0, -90.0, 0, 0, 0, 0, 2, 1);
+						}));
+					}
+					return menu1;
 				}, i));
 				return selected_player_menu;
 			}, i));
@@ -1259,6 +1391,68 @@ void Client::InitializeMenu()
 	{
 		auto recovery_menu = SpawnMenu("Recovery Menu");
 		return recovery_menu;
+	}));
+#pragma endregion
+#pragma region World Menu 
+	CurrentMenu->Add(new UIItemSubMenu("World Menu", "Modify the world", this, [this]()->UIMenu*
+	{
+		auto worldMenu = SpawnMenu("World");
+		float waterHeight = 10.0;
+		auto pos = ENTITY::GET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), FALSE);
+		WATER::GET_WATER_HEIGHT_NO_WAVES(pos.x, pos.y, pos.z, &waterHeight);
+		worldMenu->Add(new UINumberItem<float>("Set Water Height", "", [this](void* param)
+		{
+			float item = *(float*)(&param);
+			auto pos = ENTITY::GET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), FALSE);
+			WATER::MODIFY_WATER(pos.x, pos.y, pos.z, item);
+		}, waterHeight));
+		worldMenu->Add(new UIItemToggle("Gravity", "", [this](void* param)
+		{
+			if (!Threads.count(&NoGravity))
+				Threads[&NoGravity] = new ScriptThread([this](ScriptThread* thread)
+			{
+				GAMEPLAY::SET_GRAVITY_LEVEL(NoGravity);
+			}
+		}, &NoGravity));
+		worldMenu->Add(new UIItemSubMenu("Weather Menu", "", this, [this]()->UIMenu*
+		{
+			auto weatherMenu = SpawnMenu("Weather");
+			weatherMenu->Add(new UIItem("Blizzard", "", [](void* param) 
+			{
+				GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST("XMAS");
+			}));
+			weatherMenu->Add(new UIItem("Clear", "", [](void* param)
+			{
+				GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST("CLEAR");
+			}));
+			weatherMenu->Add(new UIItem("Clearing", "", [](void* param)
+			{
+				GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST("CLEARNING");
+			}));
+			weatherMenu->Add(new UIItem("Overcast", "", [](void* param)
+			{
+				GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST("OVERCAST");
+			}));
+			weatherMenu->Add(new UIItem("Cloudy", "", [](void* param)
+			{
+				GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST("CLOUDS");
+			}));
+			weatherMenu->Add(new UIItem("Rainy", "", [](void* param)
+			{
+				GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST("RAIN");
+			}));
+			weatherMenu->Add(new UIItem("Extra Sunny", "", [](void* param)
+			{
+				GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST("EXTRASUNNY");
+			}));
+			weatherMenu->Add(new UIItem("Thunder", "", [](void* param)
+			{
+				GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST("THUNDER");
+				GAMEPLAY::_SET_WEATHER_TYPE_OVER_TIME("THUNDER", 30.0f);
+			}));
+			return weatherMenu;
+		}));
+		return worldMenu;
 	}));
 #pragma endregion
 }

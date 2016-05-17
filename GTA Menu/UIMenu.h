@@ -53,3 +53,13 @@ public:
 private:
 	T m_item;
 };
+
+class UIMenuRGB : public UIMenu
+{
+public:
+	UIMenuRGB(const UIText& title, const UIText& caption, Point position, Size_t size, std::function<void(uint32_t* param)> onUpdate, std::function<void()> onOpen, std::function<void()> onClose, uint32_t* start);
+	void Draw();
+private:
+	uint32_t m_color[3];
+	std::function<void(uint32_t* param)> m_onUpdate;
+};

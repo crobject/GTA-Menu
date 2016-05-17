@@ -116,6 +116,15 @@ public:
 	void Draw();
 };
 
+class UIItemDisplayPedMenu : public UIItemAdditionalInformation<Ped>
+{
+public:
+	UIItemDisplayPedMenu(std::string title, std::string description, Client* client, MenuCallback createMenu, Ped item) :
+		UIItemAdditionalInformation<Ped>(title, description, client, createMenu, item)
+	{}
+	void Draw();
+};
+
 template <class T>
 class UINumberItem : public UIItem
 {

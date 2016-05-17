@@ -11,7 +11,7 @@ Vehicle SpawnVehicle(std::string vehName, Ped ped, bool inVehicle)
 	STREAMING::REQUEST_MODEL(hash);
 	if (STREAMING::HAS_MODEL_LOADED(hash))
 	{
-		Vehicle VehicleHandle = VEHICLE::CREATE_VEHICLE(hash, pos.x, pos.y, pos.z, 0, TRUE, TRUE);
+		Vehicle VehicleHandle = VEHICLE::CREATE_VEHICLE(hash, pos.x, pos.y, pos.z, 0, TRUE, 0);
 		VEHICLE::SET_VEHICLE_ON_GROUND_PROPERLY(VehicleHandle);
 		STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(hash);
 		if (inVehicle)
@@ -37,7 +37,7 @@ std::string GetPedModel(Ped ped)
 	}
 	return "";
 }
-void SpawnProp(std::string propName, Ped ped, Client* client)
+Object SpawnProp(std::string propName, Ped ped, Client* client)
 {
 	Vector3 pos = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ped, 2.0, 0, 0);
 	auto hash = GAMEPLAY::GET_HASH_KEY((char*)propName.c_str());
@@ -50,6 +50,7 @@ void SpawnProp(std::string propName, Ped ped, Client* client)
 			OBJECT::PLACE_OBJECT_ON_GROUND_PROPERLY(obj);
 			client->AddObject(obj);
 		}
+		return obj;
 	}
 }
 void SetModel(std::string modelName)
@@ -66,7 +67,7 @@ void SetModel(std::string modelName)
 		PED::SET_PED_DEFAULT_COMPONENT_VARIATION(PLAYER::PLAYER_PED_ID());
 		WAIT(0);
 		for (int i = 0; i < 12; i++)
-			for (int j = 0; j < 100; j++)
+			for (int j = 0; j < 100; j++) 
 			{
 				int drawable = rand() % 10;
 				int texture = rand() % 10;

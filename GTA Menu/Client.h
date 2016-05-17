@@ -10,13 +10,14 @@ struct ScriptThread
 	ScriptThread(std::function<void(ScriptThread* thread)> cb)
 	{
 		fn = cb;
+		waitEndTime = GetTickCount();
 	}
 	std::function<void(ScriptThread* thread)> fn;
 	uint32_t waitEndTime;
 	void Sleep(uint32_t val) { waitEndTime = GetTickCount() + val; }
 	void Exec()
 	{
-		if (GetTickCount() < waitEndTime)
+		if (GetTickCount() >= waitEndTime)
 			fn(this);
 	}
 };
@@ -45,6 +46,7 @@ public:
 	bool GodMode;
 	bool SuperGrip;
 	bool SuperRun;
+	bool SuperSwim;
 	bool SuperJump;
 	bool SuperPunch;
 	bool ExplosiveBullets;
@@ -63,11 +65,19 @@ public:
 	bool MoneyDrop;
 	bool VehicleWeapon;
 	bool SpawnInVehicle;
-	bool Projectile;
+	bool MobileRadio;
+	bool DisableHUD;
+	bool ShrinkPlayer;
+	bool SilentPlayer;
+	bool UnlimitedAbility;
+	std::string Vision;
+	uint32_t GroupId;
+	bool Projectile;	
 	uint32_t ProjectileType;
 	Hash vehicleWeaponHash;
 	Object WaterObject;
 	Object AirObject;
+	bool NoGravity;
 	std::map<bool*, ScriptThread*> Threads;
 	std::vector<Object> SpawnedObjects;
 };

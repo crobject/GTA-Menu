@@ -97,3 +97,40 @@ UIMenu::~UIMenu()
 			delete i;
 	}
 }
+
+UIMenuRGB::UIMenuRGB(const UIText& title, const UIText& caption, Point position, Size_t size, std::function<void(uint32_t* param)> onUpdate, std::function<void()> onOpen, std::function<void()> onClose, uint32_t* start) : UIMenu(title, caption, position, size, onOpen, onClose), m_onUpdate(onUpdate)
+{
+	if (start)
+	{
+		m_color[0] = start[0];
+		m_color[1] = start[1];
+		m_color[2] = start[2];
+	}
+	else
+	{
+		m_color[0] = m_color[1] = m_color[2] = 0;
+	}
+	Add(new UINumberItem<uint32_t>("R", "", [this](void* param)
+	{
+		m_color[0] = (uint32_t)param;
+		m_onUpdate(m_color);
+	}, m_color[0]));
+	Add(new UINumberItem<uint32_t>("G", "", [this](void* param)
+	{
+		m_color[1] = (uint32_t)param;
+		m_onUpdate(m_color);
+	}, m_color[1]));
+	Add(new UINumberItem<uint32_t>("B", "", [this](void* param)
+	{
+		m_color[2] = (uint32_t)param;
+		m_onUpdate(m_color);
+	}, m_color[2]));
+}
+
+void UIMenuRGB::Draw()
+{
+	UIMenu::Draw();
+	auto pnt = m_position;
+	pnt.m_x += (m_container.GetSize().m_width * 2) + 30;
+	UIRectangle(pnt, Size_t(200, 200), Color_t(m_color[0], m_color[1], m_color[2], 125)).Draw();
+}

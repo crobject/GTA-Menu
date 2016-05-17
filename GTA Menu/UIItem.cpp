@@ -168,3 +168,25 @@ void UIItemDisplayPlayerMenu::Draw()
 	}
 
 }
+
+void UIItemDisplayPedMenu::Draw()
+{
+
+	UIItemAdditionalInformation<Ped>::Draw();
+	if ((UIItemDisplayPedMenu*)(*m_parent->GetCurrentItem()) == this)
+	{
+		auto pnt = m_parent->GetContainer().GetPosition();
+		pnt.m_x += (m_parent->GetContainer().GetSize().m_width * 2) + 30;
+		pnt.m_y += 10;
+		auto pos = ENTITY::GET_ENTITY_COORDS(m_item, FALSE);
+		UIText(std::string("X: ") + std::to_string(static_cast<int>(pos.x)) + std::string(" Y: ") + std::to_string(static_cast<int>(pos.y)) + std::string(" Z : ") + std::to_string(static_cast<int>(pos.z)),
+			pnt, DEFAULT_FONT_SCALE, Color_t(255, 255, 255, 255)).Draw();
+		pnt.m_y += 20;
+		UIText(std::string("Money: ") + std::to_string(PED::GET_PED_MONEY(m_item)), pnt, DEFAULT_FONT_SCALE, Color_t(255, 255, 255, 255)).Draw();
+		pnt.m_y += 20;
+		UIText(std::string("Health: ") + std::to_string(ENTITY::GET_ENTITY_HEALTH(m_item)), pnt, DEFAULT_FONT_SCALE, Color_t(255, 255, 255, 255)).Draw();
+		pnt.m_y += 20;
+		auto veh = PED::GET_VEHICLE_PED_IS_IN(m_item, FALSE);
+		UIText(std::string("Vehicle: ") + std::string(veh ? GetVehicleModel(veh) : "None"), pnt, DEFAULT_FONT_SCALE, Color_t(255, 255, 255, 255)).Draw();
+	}
+}
